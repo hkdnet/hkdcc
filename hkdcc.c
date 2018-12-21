@@ -50,6 +50,11 @@ void tokenize(char* p) {
     tokens[idx].input = p;
 }
 
+void token_error(int i) {
+    fprintf(stderr, "unexpected token at %d: %s\n", i, tokens[i].input);
+    exit(1);
+}
+
 // rax: return value
 int main(int argc, char **argv) {
     if (argc != 2) {
@@ -64,8 +69,7 @@ int main(int argc, char **argv) {
     printf("_main:\n");
 
     if (tokens[0].type != TK_DIG) {
-        // TODO: error handling
-        exit(1);
+        token_error(0);
     }
     printf("  mov rax, %d\n", tokens[0].value);
 
@@ -74,16 +78,14 @@ int main(int argc, char **argv) {
         switch (tokens[i].type) {
             case '+':
                 if (tokens[i+1].type != TK_DIG) {
-                    // TODO: error handling
-                    exit(1);
+                    token_error(i);
                 }
                 printf("  add rax, %d\n", tokens[i+1].value);
                 i += 2;
                 break;
             case '-':
                 if (tokens[i+1].type != TK_DIG) {
-                    // TODO: error handling
-                    exit(1);
+                    token_error(i);
                 }
                 printf("  sub rax, %d\n", tokens[i+1].value);
                 i += 2;
