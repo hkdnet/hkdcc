@@ -1,7 +1,6 @@
 #!/bin/bash
 
-# for debug, you can try `$ bash -x test.sh`
-
+# for debug, you can try `$ bash -x test.sh` 
 try() {
   expected="$1"
   input="$2"
@@ -30,5 +29,8 @@ try 13 1+10+2
 # sub
 try 2 3-1
 try 11 23-12
+
+# space
+try 2 '3 - 1'
 
 echo OK
