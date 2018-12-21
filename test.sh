@@ -19,7 +19,16 @@ try() {
   fi
 }
 
+# single value
 try 0 0
 try 42 42
+
+# add
+try 3 1+2
+try 13 1+10+2
+
+# sub
+try 2 3-1
+try 11 23-12
 
 echo OK
