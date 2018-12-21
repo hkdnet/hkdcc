@@ -17,11 +17,10 @@ typedef struct {
 // up to 100 tokens for now...
 Token tokens[100];
 
-
 void tokenize(char* p) {
     int idx = 0;
     while(*p) {
-        if (*p == ' ') {
+        if (isspace(*p)) {
             p++;
             continue;
         }
