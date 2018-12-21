@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 enum {
-  TK_DIG = 256, // digit
+  TK_NUM = 256, // digit
   TK_EOF,
 };
 
@@ -36,7 +36,7 @@ void tokenize(char *p) {
 
     // digit
     if (isdigit(*p)) {
-      tokens[idx].type = TK_DIG;
+      tokens[idx].type = TK_NUM;
       tokens[idx].input = p;
       tokens[idx].value = strtol(p, &p, 10);
       idx++;
@@ -68,7 +68,7 @@ int main(int argc, char **argv) {
   printf(".global _main\n");
   printf("_main:\n");
 
-  if (tokens[0].type != TK_DIG) {
+  if (tokens[0].type != TK_NUM) {
     token_error(0);
   }
   printf("  mov rax, %d\n", tokens[0].value);
@@ -77,14 +77,14 @@ int main(int argc, char **argv) {
   while (tokens[i].type != TK_EOF) {
     switch (tokens[i].type) {
     case '+':
-      if (tokens[i + 1].type != TK_DIG) {
+      if (tokens[i + 1].type != TK_NUM) {
         token_error(i);
       }
       printf("  add rax, %d\n", tokens[i + 1].value);
       i += 2;
       break;
     case '-':
-      if (tokens[i + 1].type != TK_DIG) {
+      if (tokens[i + 1].type != TK_NUM) {
         token_error(i);
       }
       printf("  sub rax, %d\n", tokens[i + 1].value);
