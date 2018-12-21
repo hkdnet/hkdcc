@@ -1,4 +1,4 @@
-bin/hkdcc: hkdcc.c
+bin/hkdcc: fmt hkdcc.c
 	gcc -o $@ hkdcc.c
 
 fmt: hkdcc.c
