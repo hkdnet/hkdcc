@@ -23,7 +23,7 @@ typedef struct Node {
   int type; // ND_X, + or -
   struct Node *lhs;
   struct Node *rhs;
-  int val; // the value of ND_NUM
+  int value; // the value of ND_NUM
 } Node;
 
 // Buffer for tokens.
@@ -39,10 +39,10 @@ Node *new_node(int type, Node *lhs, Node *rhs) {
   return node;
 }
 
-Node *new_node_num(int val) {
+Node *new_node_num(int value) {
   Node *node = malloc(sizeof(Node));
   node->type = ND_NUM;
-  node->val = val;
+  node->value = value;
   return node;
 }
 
@@ -154,7 +154,33 @@ void token_error(int i) {
   exit(1);
 }
 
+void generate(Node *node) {
+  if (node->type == ND_NUM) {
+    printf("  push %d\n", node->value);
+    return;
+  }
+  if (node->lhs)
+    generate(node->lhs);
+  if (node->rhs)
+    generate(node->rhs);
+
+  // two operand
+  printf("  pop rdi\n");
+  printf("  pop rax\n");
+  switch (node->type) {
+  case '+':
+    printf("  add rax, rdi\n");
+    break;
+  case '-':
+    printf("  sub rax, rdi\n");
+    break;
+  }
+  printf("  push rax\n");
+}
+
 // rax: return value
+// rsp: stack pointer
+// rdi, rsi, rdx, rcs, r8, r9: args
 int main(int argc, char **argv) {
   if (argc != 2) {
     fprintf(stderr, "arguments count mismatch\n");
@@ -170,31 +196,12 @@ int main(int argc, char **argv) {
   if (tokens[0].type != TK_NUM) {
     token_error(0);
   }
-  printf("  mov rax, %d\n", tokens[0].value);
 
-  int i = 1;
-  while (tokens[i].type != TK_EOF) {
-    switch (tokens[i].type) {
-    case '+':
-      if (tokens[i + 1].type != TK_NUM) {
-        token_error(i);
-      }
-      printf("  add rax, %d\n", tokens[i + 1].value);
-      i += 2;
-      break;
-    case '-':
-      if (tokens[i + 1].type != TK_NUM) {
-        token_error(i);
-      }
-      printf("  sub rax, %d\n", tokens[i + 1].value);
-      i += 2;
-      break;
-    default:
-      fprintf(stderr, "unexpected token at %d: %s\n", i, tokens[i].input);
-      return 1;
-    }
-  }
+  Node *prog = expr();
 
+  generate(prog);
+
+  printf("  pop rax\n");
   printf("  ret\n");
   return 0;
 }
