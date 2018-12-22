@@ -152,11 +152,6 @@ void tokenize(char *p) {
   tokens[idx].input = p;
 }
 
-void token_error(int i) {
-  fprintf(stderr, "unexpected token at %d: %s\n", i, tokens[i].input);
-  exit(1);
-}
-
 void generate(Node *node) {
   if (node->type == ND_NUM) {
     printf("  push %d\n", node->value);
