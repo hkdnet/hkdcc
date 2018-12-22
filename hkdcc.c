@@ -152,6 +152,49 @@ void tokenize(char *p) {
   tokens[idx].input = p;
 }
 
+void show_tokens() {
+  int i = 0;
+  while (tokens[i].type != 0) {
+    switch (tokens[i].type) {
+    case TK_NUM:
+      printf("%10s: %d\n", "TK_NUM", tokens[i].value);
+      break;
+    case TK_LPAREN:
+      printf("%10s:\n", "TK_LPAREN");
+      break;
+    case TK_RPAREN:
+      printf("%10s:\n", "TK_RPAREN");
+      break;
+    case TK_EOF:
+      printf("%10s:\n", "TK_EOF");
+      break;
+    default:
+      printf("%10c:\n", tokens[i].type);
+      break;
+    }
+    i++;
+  }
+}
+
+void show_node(Node *node, int indent) {
+  printf("show_node\n");
+  for (int i = 0; i < indent; i++)
+    printf(" ");
+
+  switch (node->type) {
+  case ND_NUM:
+    printf("ND_NUM: %d\n", node->value);
+    return;
+  default:
+    printf("%c\n", node->type);
+  }
+
+  if (node->lhs)
+    show_node(node->lhs, indent + 2);
+  if (node->rhs)
+    show_node(node->rhs, indent + 2);
+}
+
 void generate(Node *node) {
   if (node->type == ND_NUM) {
     printf("  push %d\n", node->value);
@@ -194,11 +237,17 @@ int main(int argc, char **argv) {
 
   tokenize(argv[1]);
 
+  // for debug
+  // show_tokens();
+
+  Node *prog = expr();
+
+  // for debug
+  // show_node(prog, 0);
+
   printf(".intel_syntax noprefix\n");
   printf(".global _main\n");
   printf("_main:\n");
-
-  Node *prog = expr();
 
   generate(prog);
 
