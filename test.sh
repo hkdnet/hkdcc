@@ -33,4 +33,8 @@ try 11 23-12
 # space
 try 2 '3 - 1'
 
+# multi
+try 120 '70+2*5*5'
+# div
+try 2 '4/2'
 echo OK
