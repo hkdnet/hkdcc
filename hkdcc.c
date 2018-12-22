@@ -125,7 +125,7 @@ void tokenize(char *p) {
     }
 
     // operator
-    if (*p == '+' || *p == '-') {
+    if (*p == '+' || *p == '-' || *p == '*' || *p == '/') {
       tokens[idx].type = *p;
       tokens[idx].input = p;
       p++;
@@ -173,6 +173,13 @@ void generate(Node *node) {
     break;
   case '-':
     printf("  sub rax, rdi\n");
+    break;
+  case '*':
+    printf("  mul rdi\n"); // memo: this means `rax = rax * rdi`
+    break;
+  case '/':
+    printf("  mov rdx, 0\n");
+    printf("  div rdi\n"); // memo: rax = ((rdx << 64) | rax) / rdi
     break;
   }
   printf("  push rax\n");
