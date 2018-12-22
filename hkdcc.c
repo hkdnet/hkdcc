@@ -51,6 +51,7 @@ Node *expr();
 // term: number
 // term: "(" expr ")"
 Node *term() {
+  int beg = pos;
   if (tokens[pos].type == TK_NUM) {
     return new_node_num(tokens[pos++].value);
   }
@@ -60,7 +61,7 @@ Node *term() {
     if (tokens[pos].type == TK_RPAREN) {
       return ret;
     }
-    fprintf(stderr, "mismatch paren\n");
+    fprintf(stderr, "mismatch paren, begin at %d, now %d\n", beg, pos);
     exit(1);
   }
   fprintf(stderr, "unexpected token at %d: %s\n", pos, tokens[pos].input);
