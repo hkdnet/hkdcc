@@ -59,6 +59,7 @@ Node *term() {
     pos++;
     Node *ret = expr();
     if (tokens[pos].type == TK_RPAREN) {
+      pos++;
       return ret;
     }
     fprintf(stderr, "mismatch paren, begin at %d, now %d\n", beg, pos);
