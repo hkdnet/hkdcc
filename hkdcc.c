@@ -108,6 +108,22 @@ void tokenize(char *p) {
       continue;
     }
 
+    // paren
+    if (*p == '(') {
+      tokens[idx].type = TK_LPAREN;
+      tokens[idx].input = p;
+      p++;
+      idx++;
+      continue;
+    }
+    if (*p == ')') {
+      tokens[idx].type = TK_RPAREN;
+      tokens[idx].input = p;
+      p++;
+      idx++;
+      continue;
+    }
+
     // operator
     if (*p == '+' || *p == '-') {
       tokens[idx].type = *p;
