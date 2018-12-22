@@ -46,6 +46,8 @@ Node *new_node_num(int value) {
   return node;
 }
 
+Node *expr();
+
 // term: number
 // term: "(" expr ")"
 Node *term() {
@@ -54,7 +56,7 @@ Node *term() {
   }
   if (tokens[pos].type == TK_LPAREN) {
     pos++;
-    Node *ret = term();
+    Node *ret = expr();
     if (tokens[pos].type == TK_RPAREN) {
       return ret;
     }
