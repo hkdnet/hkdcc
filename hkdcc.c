@@ -202,10 +202,6 @@ int main(int argc, char **argv) {
   printf(".global _main\n");
   printf("_main:\n");
 
-  if (tokens[0].type != TK_NUM) {
-    token_error(0);
-  }
-
   Node *prog = expr();
 
   generate(prog);
