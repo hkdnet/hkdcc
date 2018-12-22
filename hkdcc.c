@@ -3,7 +3,9 @@
 #include <stdlib.h>
 
 enum {
-  TK_NUM = 256, // digit
+  TK_LPAREN = 254, // (
+  TK_RPAREN = 255, // )
+  TK_NUM = 256,    // number
   TK_EOF,
 };
 
@@ -13,9 +15,90 @@ typedef struct {
   char *input;
 } Token;
 
+enum {
+  ND_NUM = 256, // number node
+};
+
+typedef struct Node {
+  int type; // ND_X, + or -
+  struct Node *lhs;
+  struct Node *rhs;
+  int val; // the value of ND_NUM
+} Node;
+
 // Buffer for tokens.
 // up to 100 tokens for now...
 Token tokens[100];
+int pos = 0;
+
+Node *new_node(int type, Node *lhs, Node *rhs) {
+  Node *node = malloc(sizeof(Node));
+  node->type = type;
+  node->lhs = lhs;
+  node->rhs = rhs;
+  return node;
+}
+
+Node *new_node_num(int val) {
+  Node *node = malloc(sizeof(Node));
+  node->type = ND_NUM;
+  node->val = val;
+  return node;
+}
+
+// term: number
+// term: "(" expr ")"
+Node *term() {
+  if (tokens[pos].type == TK_NUM) {
+    return new_node_num(tokens[pos++].value);
+  }
+  if (tokens[pos].type == TK_LPAREN) {
+    pos++;
+    Node *ret = term();
+    if (tokens[pos].type == TK_RPAREN) {
+      return ret;
+    }
+    fprintf(stderr, "mismatch paren\n");
+    exit(1);
+  }
+  fprintf(stderr, "unexpected token at %d: %s\n", pos, tokens[pos].input);
+  exit(1);
+}
+
+// mul:  term
+// mul:  term "*" mul
+// mul:  term "/" mul
+Node *mul() {
+  Node *lhs = term();
+  if (tokens[pos].type == '*') {
+    pos++; // skip *
+    Node *rhs = mul();
+    return new_node('*', lhs, rhs);
+  }
+  if (tokens[pos].type == '/') {
+    pos++; // skip /
+    Node *rhs = mul();
+    return new_node('/', lhs, rhs);
+  }
+  return lhs;
+}
+
+// expr:  mul expr'
+// expr': ε | "+" expr | "-" expr
+Node *expr() {
+  Node *lhs = mul();
+  if (tokens[pos].type == '+') {
+    pos++; // skip +
+    Node *rhs = expr();
+    return new_node('+', lhs, rhs);
+  }
+  if (tokens[pos].type == '-') {
+    pos++; // skip -
+    Node *rhs = expr();
+    return new_node('-', lhs, rhs);
+  }
+  return lhs;
+}
 
 void tokenize(char *p) {
   int idx = 0;
