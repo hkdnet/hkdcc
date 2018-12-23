@@ -3,9 +3,11 @@
 #include <stdlib.h>
 
 enum {
-  TK_LPAREN = 254, // (
-  TK_RPAREN = 255, // )
-  TK_NUM = 256,    // number
+  TK_NUM = 256, // number
+  TK_LPAREN,    // (
+  TK_RPAREN,    // )
+  TK_IDENT,     // a-z
+  TK_SCOLON,    // ;
   TK_EOF,
 };
 
@@ -17,6 +19,8 @@ typedef struct {
 
 enum {
   ND_NUM = 256, // number node
+  ND_IDENT,     // identifier
+  ND_PROG,      // program
 };
 
 typedef struct Node {
@@ -24,12 +28,14 @@ typedef struct Node {
   struct Node *lhs;
   struct Node *rhs;
   int value; // the value of ND_NUM
+  char name; // for ND_IDENT
 } Node;
 
 // Buffer for tokens.
 // up to 100 tokens for now...
 Token tokens[100];
 int pos = 0;
+Node *code[100];
 
 Node *new_node(int type, Node *lhs, Node *rhs) {
   Node *node = malloc(sizeof(Node));
@@ -48,7 +54,7 @@ Node *new_node_num(int value) {
 
 Node *expr();
 
-// term: number
+// term: number | ident
 // term: "(" expr ")"
 Node *term() {
   int beg = pos;
@@ -104,6 +110,29 @@ Node *expr() {
   return lhs;
 }
 
+// assign : expr assign' ";"
+// assign': ε | "=" expr assign'
+Node *assign() {
+  Node *expression = expr();
+  if (tokens[pos].type == TK_SCOLON) { // ε
+    pos++;                             // skip ;
+    return expression;
+  }
+  // TODO: impl =
+  return NULL;
+}
+
+// program : assign program'
+// program': ε | assign program'
+Node *program() {
+  Node *lhs = assign();
+  if (tokens[pos].type == TK_EOF) {
+    return lhs;
+  }
+  Node *rhs = assign();
+  return new_node(ND_PROG, lhs, rhs);
+}
+
 void tokenize(char *p) {
   int idx = 0;
   while (*p) {
@@ -112,6 +141,14 @@ void tokenize(char *p) {
       continue;
     }
 
+    // semicolon
+    if (*p == ';') {
+      tokens[idx].type = TK_SCOLON;
+      tokens[idx].input = p;
+      p++;
+      idx++;
+      continue;
+    }
     // paren
     if (*p == '(') {
       tokens[idx].type = TK_LPAREN;
@@ -146,6 +183,16 @@ void tokenize(char *p) {
       continue;
     }
 
+    // identifier
+    // TODO: for now, identifier is a, b, c,..., z
+    if ('a' <= *p && *p <= 'z') {
+      tokens[idx].type = TK_IDENT;
+      tokens[idx].input = p;
+      idx++;
+      p++;
+      continue;
+    }
+
     fprintf(stderr, "unexpected characters %s\n", p);
     exit(1);
   }
@@ -168,6 +215,9 @@ void show_tokens() {
       break;
     case TK_EOF:
       printf("%10s:\n", "TK_EOF");
+      break;
+    case TK_SCOLON:
+      printf("%10s:\n", "TK_SCOLON");
       break;
     default:
       printf("%10c:\n", tokens[i].type);
@@ -227,8 +277,20 @@ void generate(Node *node) {
   printf("  push rax\n");
 }
 
+/* frame prologue
+push rbp
+mov rbp, rsp
+sub rsp, 8*local_variable_count
+*/
+/* frame epilogue
+mov rsp, rbp
+pop rbp
+ret
+*/
+
 // rax: return value
 // rsp: stack pointer
+// rbp: base register
 // rdi, rsi, rdx, rcs, r8, r9: args
 int main(int argc, char **argv) {
   if (argc != 2) {
@@ -241,18 +303,30 @@ int main(int argc, char **argv) {
   // for debug
   // show_tokens();
 
-  Node *prog = expr();
+  int i = 0;
+  while (tokens[pos].type != TK_EOF) {
+    Node *asgn = assign();
+    code[i] = asgn;
+    i++;
+  }
+  code[i] = NULL;
 
   // for debug
-  // show_node(prog, 0);
+  // i = 0;
+  // while (code[i]) {
+  //   show_node(code[i++], 0);
+  // }
 
   printf(".intel_syntax noprefix\n");
   printf(".global _main\n");
   printf("_main:\n");
 
-  generate(prog);
+  i = 0;
+  while (code[i]) {
+    generate(code[i++]);
+    printf("  pop rax\n");
+  }
 
-  printf("  pop rax\n");
   printf("  ret\n");
   return 0;
 }
