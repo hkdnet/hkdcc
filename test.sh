@@ -42,4 +42,6 @@ try 47 "5+6*7"
 try 15 "5*(9-6)"
 try 4 "(3+5)/2"
 
+# multi statements
+try 2 "1; 2"
 echo OK
