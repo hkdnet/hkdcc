@@ -19,29 +19,29 @@ try() {
 }
 
 # single value
-try 0 0
-try 42 42
+try 0 '0;'
+try 42 '42;'
 
 # add
-try 3 1+2
-try 13 1+10+2
+try 3 '1+2;'
+try 13 '1+10+2;'
 
 # sub
-try 2 3-1
-try 11 23-12
+try 2 '3-1;'
+try 11 '23-12;'
 
 # space
-try 2 '3 - 1'
+try 2 '3 - 1;'
 
 # multi
-try 120 '70+2*5*5'
+try 120 '70+2*5*5;'
 # div
-try 2 '4/2'
+try 2 '4/2;'
 
-try 47 "5+6*7"
-try 15 "5*(9-6)"
-try 4 "(3+5)/2"
+try 47 "5+6*7;"
+try 15 "5*(9-6);"
+try 4 "(3+5)/2;"
 
 # multi statements
-try 2 "1; 2"
+try 2 "1; 2;"
 echo OK
