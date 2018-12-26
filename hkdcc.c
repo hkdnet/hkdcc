@@ -8,6 +8,7 @@ enum {
   TK_RPAREN,    // )
   TK_IDENT,     // a-z
   TK_SCOLON,    // ;
+  TK_EQ,        // =
   TK_EOF,
 };
 
@@ -144,6 +145,13 @@ void tokenize(char *p) {
     // semicolon
     if (*p == ';') {
       tokens[idx].type = TK_SCOLON;
+      tokens[idx].input = p;
+      p++;
+      idx++;
+      continue;
+    }
+    if (*p == '=') {
+      tokens[idx].type = TK_EQ;
       tokens[idx].input = p;
       p++;
       idx++;
