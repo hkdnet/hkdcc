@@ -277,17 +277,6 @@ void generate(Node *node) {
   printf("  push rax\n");
 }
 
-/* frame prologue
-push rbp
-mov rbp, rsp
-sub rsp, 8*local_variable_count
-*/
-/* frame epilogue
-mov rsp, rbp
-pop rbp
-ret
-*/
-
 // rax: return value
 // rsp: stack pointer
 // rbp: base register
@@ -321,12 +310,19 @@ int main(int argc, char **argv) {
   printf(".global _main\n");
   printf("_main:\n");
 
+  // prologue
+  printf("  push rbp\n");
+  printf("  mov rbp, rsp\n");
+  printf("  sub rsp, %d\n", 8 * 26);
+
   i = 0;
   while (code[i]) {
     generate(code[i++]);
     printf("  pop rax\n");
   }
-
+  // frame epilogue
+  printf("  mov rsp, rbp\n");
+  printf("  pop rbp\n");
   printf("  ret\n");
   return 0;
 }
