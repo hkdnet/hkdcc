@@ -44,4 +44,10 @@ try 4 "(3+5)/2;"
 
 # multi statements
 try 2 "1; 2;"
+
+# var
+try 1 "a = 1;"
+# try 1 "a = 1; a;"
+# try 1 "a = 1; a + 1;"
+
 echo OK
