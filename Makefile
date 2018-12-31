@@ -7,8 +7,8 @@ bin/hkdcc: $(OBJS)
 
 $(OBJS): hkdcc.h
 
-fmt: hkdcc.c
-	clang-format -i hkdcc.c
+fmt: $(SRCS)
+	clang-format -i $(SRCS)
 
 deps:
 	brew install clang-format # for OSX
