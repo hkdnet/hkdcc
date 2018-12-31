@@ -45,6 +45,18 @@ void generate(Node *node) {
     return;
   }
 
+  if (node->type == ND_EQEQ) {
+    generate(node->lhs);
+    generate(node->rhs);
+    printf("  pop rax\n");
+    printf("  pop rdi\n");
+    printf("  cmp rdi, rax\n");
+    printf("  sete al\n");
+    printf("  movzx rax, al\n");
+    printf("  push rax\n");
+    return;
+  }
+
   if (node->lhs)
     generate(node->lhs);
   if (node->rhs)
