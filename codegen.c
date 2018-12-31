@@ -3,6 +3,11 @@
 
 #include "hkdcc.h"
 
+// rax: return value
+// rsp: stack pointer
+// rbp: base register
+// rdi, rsi, rdx, rcs, r8, r9: args
+
 void generate_lvalue(Node *node) {
   int diff = 'z' - node->name + 1;
   if (node->type == ND_IDENT) {

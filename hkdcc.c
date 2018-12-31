@@ -2,10 +2,6 @@
 
 #include "hkdcc.h"
 
-// rax: return value
-// rsp: stack pointer
-// rbp: base register
-// rdi, rsi, rdx, rcs, r8, r9: args
 int main(int argc, char **argv) {
   if (argc != 2) {
     fprintf(stderr, "arguments count mismatch\n");
