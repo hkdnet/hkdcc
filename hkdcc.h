@@ -1,3 +1,14 @@
+typedef struct {
+  void **data;
+  int capacity;
+  int len;
+} Vector;
+
+typedef struct {
+  Vector *keys;
+  Vector *values;
+} Map;
+
 enum {
   TK_NUM = 256, // number
   TK_LPAREN,    // (
@@ -38,6 +49,13 @@ typedef struct Node {
 Token tokens[100];
 Node *code[100];
 extern int pos;
+
+// util.c
+Vector *new_vector();
+void vec_push(Vector *vec, void *elem);
+Map *new_map();
+void map_put(Map *map, void *key, void *value);
+void *map_get(Map *map, char *key);
 
 // parser.c
 void tokenize(char *p);
