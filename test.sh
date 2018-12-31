@@ -60,4 +60,8 @@ try 1 "a = 2; a == a;"
 try 1 "a = 1 == 1; a;"
 try 0 "a = 0 == 1; a;"
 
+# noteq
+try 0 "1 != 1;"
+try 1 "2 != 1;"
+
 echo OK
