@@ -222,6 +222,9 @@ void show_tokens() {
   int i = 0;
   while (tokens[i].type != 0) {
     switch (tokens[i].type) {
+    case TK_IDENT:
+      printf("%10s: %c\n", "TK_IDENT", *tokens[i].input);
+      break;
     case TK_NUM:
       printf("%10s: %d\n", "TK_NUM", tokens[i].value);
       break;
@@ -237,6 +240,9 @@ void show_tokens() {
     case TK_SCOLON:
       printf("%10s:\n", "TK_SCOLON");
       break;
+    case TK_EQ:
+      printf("%10s:\n", "TK_EQ");
+      break;
     default:
       printf("%10c:\n", tokens[i].type);
       break;
@@ -246,7 +252,6 @@ void show_tokens() {
 }
 
 void show_node(Node *node, int indent) {
-  printf("show_node\n");
   for (int i = 0; i < indent; i++)
     printf(" ");
 
@@ -254,6 +259,8 @@ void show_node(Node *node, int indent) {
   case ND_NUM:
     printf("ND_NUM: %d\n", node->value);
     return;
+  case ND_ASGN:
+    printf("ND_ASGN:\n");
   default:
     printf("%c\n", node->type);
   }
@@ -314,15 +321,12 @@ int main(int argc, char **argv) {
   while (tokens[pos].type != TK_EOF) {
     Node *asgn = assign();
     code[i] = asgn;
+    // for debug
+    // printf("show_node at %d\n", i);
+    // show_node(asgn, 0);
     i++;
   }
   code[i] = NULL;
-
-  // for debug
-  // i = 0;
-  // while (code[i]) {
-  //   show_node(code[i++], 0);
-  // }
 
   printf(".intel_syntax noprefix\n");
   printf(".global _main\n");
