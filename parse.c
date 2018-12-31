@@ -264,6 +264,9 @@ void show_tokens() {
     case TK_EQ:
       printf("%10s:\n", "TK_EQ");
       break;
+    case TK_EQEQ:
+      printf("%10s:\n", "TK_EQEQ");
+      break;
     default:
       printf("%10c:\n", tokens[i].type);
       break;
