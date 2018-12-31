@@ -57,6 +57,9 @@ Map *new_map();
 void map_put(Map *map, void *key, void *value);
 void *map_get(Map *map, char *key);
 
+// util_test.c
+void runtest();
+
 // parser.c
 void tokenize(char *p);
 int parse();
