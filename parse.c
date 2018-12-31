@@ -1,6 +1,6 @@
 #include <ctype.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "hkdcc.h"
 
@@ -130,9 +130,37 @@ Node *program() {
   return new_node(ND_PROG, lhs, rhs);
 }
 
+static int is_eq = 0;
+
 void tokenize(char *p) {
   int idx = 0;
   while (*p) {
+    if (*p == '=') {
+      if (is_eq) {
+        tokens[idx].type = TK_EQEQ;
+        tokens[idx].input = p;
+        p++;
+        idx++;
+
+        is_eq = 0;
+        continue;
+      } else {
+        is_eq = 1;
+        p++;
+        continue;
+      }
+    } else {
+      if (is_eq) {
+        tokens[idx].type = TK_EQ;
+        tokens[idx].input = p;
+        p++;
+        idx++;
+
+        is_eq = 0;
+        continue;
+      }
+    }
+
     if (isspace(*p)) {
       p++;
       continue;
@@ -141,13 +169,6 @@ void tokenize(char *p) {
     // semicolon
     if (*p == ';') {
       tokens[idx].type = TK_SCOLON;
-      tokens[idx].input = p;
-      p++;
-      idx++;
-      continue;
-    }
-    if (*p == '=') {
-      tokens[idx].type = TK_EQ;
       tokens[idx].input = p;
       p++;
       idx++;
@@ -205,17 +226,17 @@ void tokenize(char *p) {
 }
 
 int parse() {
-    int i = 0;
-    while (tokens[pos].type != TK_EOF) {
-        Node *asgn = assign();
-        code[i] = asgn;
-        // for debug
-        // printf("show_node at %d\n", i);
-        // show_node(asgn, 0);
-        i++;
-    }
-    code[i] = NULL;
-    return i;
+  int i = 0;
+  while (tokens[pos].type != TK_EOF) {
+    Node *asgn = assign();
+    code[i] = asgn;
+    // for debug
+    // printf("show_node at %d\n", i);
+    // show_node(asgn, 0);
+    i++;
+  }
+  code[i] = NULL;
+  return i;
 }
 
 void show_tokens() {
@@ -270,4 +291,3 @@ void show_node(Node *node, int indent) {
   if (node->rhs)
     show_node(node->rhs, indent + 2);
 }
-
