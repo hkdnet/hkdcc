@@ -136,6 +136,7 @@ Node *program() {
 }
 
 static int is_eq = 0;
+static int is_bang = 0;
 
 void tokenize(char *p) {
   int idx = 0;
@@ -148,6 +149,13 @@ void tokenize(char *p) {
         idx++;
 
         is_eq = 0;
+        continue;
+      } else if (is_bang) {
+        tokens[idx].type = TK_NEQ;
+        tokens[idx].input = p;
+        p++;
+        idx++;
+        is_bang = 0;
         continue;
       } else {
         is_eq = 1;
@@ -164,6 +172,18 @@ void tokenize(char *p) {
         is_eq = 0;
         continue;
       }
+    }
+
+    if (*p == '!') {
+      // TODO: currently, "!" is only a part of "!=". After impl unary operator
+      // "!", this is not an error.
+      if (is_bang) {
+        fprintf(stderr, "unexpected characters %s\n", p);
+        exit(1);
+      }
+      is_bang = 1;
+      p++;
+      continue;
     }
 
     if (isspace(*p)) {

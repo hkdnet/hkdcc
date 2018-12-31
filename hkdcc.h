@@ -5,7 +5,8 @@ enum {
   TK_IDENT,     // a-z
   TK_SCOLON,    // ;
   TK_EQ,        // =
-  TK_EQEQ,        // =
+  TK_EQEQ,        // ==
+  TK_NEQ,        // !=
   TK_EOF,
 };
 
