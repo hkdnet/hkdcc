@@ -20,6 +20,7 @@ enum {
   ND_IDENT,     // identifier
   ND_PROG,      // program
   ND_ASGN,
+  ND_EQEQ,
 };
 
 typedef struct Node {
