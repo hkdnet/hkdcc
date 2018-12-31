@@ -53,6 +53,13 @@ Node *new_node_num(int value) {
   return node;
 }
 
+Node *new_node_ident(char var) {
+  Node *node = malloc(sizeof(Node));
+  node->type = ND_IDENT;
+  node->name = var;
+  return node;
+}
+
 Node *expr();
 
 // term: number | ident
@@ -61,6 +68,9 @@ Node *term() {
   int beg = pos;
   if (tokens[pos].type == TK_NUM) {
     return new_node_num(tokens[pos++].value);
+  }
+  if (tokens[pos].type == TK_IDENT) {
+    return new_node_ident(*tokens[pos++].input);
   }
   if (tokens[pos].type == TK_LPAREN) {
     pos++;
