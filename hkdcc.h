@@ -22,6 +22,7 @@ enum {
   ND_PROG,      // program
   ND_ASGN,
   ND_EQEQ,
+  ND_NEQ,
 };
 
 typedef struct Node {

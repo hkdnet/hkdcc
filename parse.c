@@ -73,7 +73,7 @@ Node *mul() {
 }
 
 // expr:  mul expr'
-// expr': ε | "+" expr | "-" expr | "==" expr
+// expr': ε | "+" expr | "-" expr | "==" expr | "!=" expr
 Node *expr() {
   Node *lhs = mul();
   if (tokens[pos].type == '+') {
@@ -90,6 +90,11 @@ Node *expr() {
     pos++; // skip TK_EQEQ
     Node *rhs = expr();
     return new_node(ND_EQEQ, lhs, rhs);
+  }
+  if (tokens[pos].type == TK_NEQ) {
+    pos++; // skip TK_NEQ
+    Node *rhs = expr();
+    return new_node(ND_NEQ, lhs, rhs);
   }
   return lhs;
 }
