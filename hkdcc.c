@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "hkdcc.h"
+
 enum {
   TK_NUM = 256, // number
   TK_LPAREN,    // (

@@ -1,5 +1,11 @@
-bin/hkdcc: fmt hkdcc.c
-	gcc -o $@ hkdcc.c
+CFLAGS=-Wall -std=c11
+SRCS=$(wildcard *.c)
+OBJS=$(SRCS:.c=.o)
+
+bin/hkdcc: $(OBJS)
+	gcc -o $@ $^
+
+$(OBJS): hkdcc.h
 
 fmt: hkdcc.c
 	clang-format -i hkdcc.c
