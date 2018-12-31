@@ -14,6 +14,7 @@ deps:
 	brew install clang-format # for OSX
 
 test: bin/hkdcc
+	bin/hkdcc -test
 	./test.sh
 
 clean:
