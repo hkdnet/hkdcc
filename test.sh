@@ -47,7 +47,8 @@ try 2 "1; 2;"
 
 # var
 try 1 "a = 1;"
-# try 1 "a = 1; a;"
-# try 1 "a = 1; a + 1;"
+try 1 "a = 1; a;"
+try 2 "a = 1; a + 1;"
+try 2 "a = b = 1; a + b;"
 
 echo OK
