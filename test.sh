@@ -53,5 +53,10 @@ try 2 "a = b = 1; a + b;"
 
 # eqeq
 try 1 "1 == 1;"
+try 1 "a = 1; 1 == a;"
+try 0 "a = 2; 1 == a;"
+try 0 "a = 2; a == 1;"
+try 1 "a = 2; a == a;"
+# try 1 "a = 1 == 1; a"
 
 echo OK
