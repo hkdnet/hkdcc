@@ -4,7 +4,14 @@
 
 #include "hkdcc.h"
 
-int pos = 0;
+typedef struct {
+  Vector *tokens;
+  int pos;
+} ParseState;
+
+Token *cur_token(ParseState *state) {
+  return (Token *)state->tokens->data[state->pos];
+}
 
 Node *new_node(int type, Node *lhs, Node *rhs) {
   Node *node = malloc(sizeof(Node));
@@ -32,41 +39,48 @@ Node *expr();
 
 // term: number | ident
 // term: "(" expr ")"
-Node *term() {
-  int beg = pos;
-  if (tokens[pos].type == TK_NUM) {
-    return new_node_num(tokens[pos++].value);
+Node *term(ParseState *state) {
+  int beg = state->pos;
+  Token *token = cur_token(state);
+  if (token->type == TK_NUM) {
+    Node *ret = new_node_num(token->value);
+    state->pos++;
+    return ret;
   }
-  if (tokens[pos].type == TK_IDENT) {
-    return new_node_ident(*tokens[pos++].input);
+  if (token->type == TK_IDENT) {
+    Node *ret = new_node_ident(*token->input);
+    state->pos++;
+    return ret;
   }
-  if (tokens[pos].type == TK_LPAREN) {
-    pos++;
-    Node *ret = expr();
-    if (tokens[pos].type == TK_RPAREN) {
-      pos++;
+  if (token->type == TK_LPAREN) {
+    state->pos++; // skip (
+    Node *ret = expr(state);
+    token = cur_token(state);
+    if (token->type == TK_RPAREN) {
+      state->pos++; // skip )
       return ret;
     }
-    fprintf(stderr, "mismatch paren, begin at %d, now %d\n", beg, pos);
+    fprintf(stderr, "mismatch paren, begin at %d, now %d\n", beg, state->pos);
     exit(1);
   }
-  fprintf(stderr, "unexpected token at %d: %s\n", pos, tokens[pos].input);
+  fprintf(stderr, "unexpected token at %d: %s\n", state->pos, token->input);
   exit(1);
 }
 
 // mul:  term
 // mul:  term "*" mul
 // mul:  term "/" mul
-Node *mul() {
-  Node *lhs = term();
-  if (tokens[pos].type == '*') {
-    pos++; // skip *
-    Node *rhs = mul();
+Node *mul(ParseState *state) {
+  Node *lhs = term(state);
+  Token* token = cur_token(state);
+  if (token->type == '*') {
+    state->pos++; // skip *
+    Node *rhs = mul(state);
     return new_node('*', lhs, rhs);
   }
-  if (tokens[pos].type == '/') {
-    pos++; // skip /
-    Node *rhs = mul();
+  if (token->type == '/') {
+    state->pos++; // skip /
+    Node *rhs = mul(state);
     return new_node('/', lhs, rhs);
   }
   return lhs;
@@ -74,39 +88,41 @@ Node *mul() {
 
 // expr:  mul expr'
 // expr': ε | "+" expr | "-" expr | "==" expr | "!=" expr
-Node *expr() {
-  Node *lhs = mul();
-  if (tokens[pos].type == '+') {
-    pos++; // skip +
-    Node *rhs = expr();
+Node *expr(ParseState *state) {
+  Node *lhs = mul(state);
+  Token* token = cur_token(state);
+  if (token->type == '+') {
+    state->pos++; // skip +
+    Node *rhs = expr(state);
     return new_node('+', lhs, rhs);
   }
-  if (tokens[pos].type == '-') {
-    pos++; // skip -
-    Node *rhs = expr();
+  if (token->type == '-') {
+    state->pos++; // skip -
+    Node *rhs = expr(state);
     return new_node('-', lhs, rhs);
   }
-  if (tokens[pos].type == TK_EQEQ) {
-    pos++; // skip TK_EQEQ
-    Node *rhs = expr();
+  if (token->type == TK_EQEQ) {
+    state->pos++; // skip TK_EQEQ
+    Node *rhs = expr(state);
     return new_node(ND_EQEQ, lhs, rhs);
   }
-  if (tokens[pos].type == TK_NEQ) {
-    pos++; // skip TK_NEQ
-    Node *rhs = expr();
+  if (token->type == TK_NEQ) {
+    state->pos++; // skip TK_NEQ
+    Node *rhs = expr(state);
     return new_node(ND_NEQ, lhs, rhs);
   }
   return lhs;
 }
 
 // assign': ε | "=" expr assign'
-Node *assign_tail() {
-  if (tokens[pos].type != TK_EQ) { // ε
+Node *assign_tail(ParseState *state) {
+  Token* token = cur_token(state);
+  if (token->type != TK_EQ) { // ε
     return NULL;
   }
-  pos++; // skip "="
-  Node *lhs = expr();
-  Node *rhs = assign_tail();
+  state->pos++; // skip "="
+  Node *lhs = expr(state);
+  Node *rhs = assign_tail(state);
   if (!rhs) {
     return lhs;
   }
@@ -115,51 +131,58 @@ Node *assign_tail() {
 
 // assign : expr assign' ";"
 // assign': ε | "=" expr assign'
-Node *assign() {
-  Node *lhs = expr();
-  Node *rhs = assign_tail();
-  if (tokens[pos].type == TK_SCOLON) { // ε
-    pos++;                             // skip ;
+Node *assign(ParseState *state) {
+  Node *lhs = expr(state);
+  Node *rhs = assign_tail(state);
+
+  Token *token = cur_token(state);
+  if (token->type == TK_SCOLON) { // ε
+    state->pos++;                 // skip ;
     if (!rhs) {
       return lhs;
     }
     return new_node(ND_ASGN, lhs, rhs);
   }
-  fprintf(stderr, "unexpected token at %d\n", pos);
+  fprintf(stderr, "unexpected token at %d\n", state->pos);
   exit(1);
 }
 
 // program : assign program'
 // program': ε | assign program'
-Node *program() {
-  Node *lhs = assign();
-  if (tokens[pos].type == TK_EOF) {
+Node *program(ParseState *state) {
+  Node *lhs = assign(state);
+  Token *token = cur_token(state);
+  if (token->type == TK_EOF) {
     return lhs;
   }
-  Node *rhs = assign();
+  Node *rhs = assign(state);
   return new_node(ND_PROG, lhs, rhs);
 }
 
 static int is_eq = 0;
 static int is_bang = 0;
 
-void tokenize(char *p) {
+Vector *tokenize(char *p) {
+  Vector *ret = new_vector();
   int idx = 0;
   while (*p) {
     if (*p == '=') {
       if (is_eq) {
-        tokens[idx].type = TK_EQEQ;
-        tokens[idx].input = p;
+        Token *token = malloc(sizeof(Token));
+        token->type = TK_EQEQ;
+        token->input = p;
         p++;
         idx++;
-
         is_eq = 0;
+        vec_push(ret, token);
         continue;
       } else if (is_bang) {
-        tokens[idx].type = TK_NEQ;
-        tokens[idx].input = p;
+        Token *token = malloc(sizeof(Token));
+        token->type = TK_NEQ;
+        token->input = p;
         p++;
         idx++;
+        vec_push(ret, token);
         is_bang = 0;
         continue;
       } else {
@@ -169,11 +192,12 @@ void tokenize(char *p) {
       }
     } else {
       if (is_eq) {
-        tokens[idx].type = TK_EQ;
-        tokens[idx].input = p;
+        Token *token = malloc(sizeof(Token));
+        token->type = TK_EQ;
+        token->input = p;
         p++;
         idx++;
-
+        vec_push(ret, token);
         is_eq = 0;
         continue;
       }
@@ -198,112 +222,137 @@ void tokenize(char *p) {
 
     // semicolon
     if (*p == ';') {
-      tokens[idx].type = TK_SCOLON;
-      tokens[idx].input = p;
+      Token *token = malloc(sizeof(Token));
+      token->type = TK_SCOLON;
+      token->input = p;
       p++;
       idx++;
+      vec_push(ret, token);
       continue;
     }
     // paren
     if (*p == '(') {
-      tokens[idx].type = TK_LPAREN;
-      tokens[idx].input = p;
+      Token *token = malloc(sizeof(Token));
+      token->type = TK_LPAREN;
+      token->input = p;
       p++;
       idx++;
+
+      vec_push(ret, token);
       continue;
     }
     if (*p == ')') {
-      tokens[idx].type = TK_RPAREN;
-      tokens[idx].input = p;
+      Token *token = malloc(sizeof(Token));
+      token->type = TK_RPAREN;
+      token->input = p;
       p++;
       idx++;
+
+      vec_push(ret, token);
       continue;
     }
 
     // operator
     if (*p == '+' || *p == '-' || *p == '*' || *p == '/') {
-      tokens[idx].type = *p;
-      tokens[idx].input = p;
+      Token *token = malloc(sizeof(Token));
+      token->type = *p;
+      token->input = p;
       p++;
       idx++;
+      vec_push(ret, token);
       continue;
     }
 
     // digit
     if (isdigit(*p)) {
-      tokens[idx].type = TK_NUM;
-      tokens[idx].input = p;
-      tokens[idx].value = strtol(p, &p, 10);
+      Token *token = malloc(sizeof(Token));
+      token->type = TK_NUM;
+      token->input = p;
+      token->value = strtol(p, &p, 10);
       idx++;
+      vec_push(ret, token);
       continue;
     }
 
     // identifier
     // TODO: for now, identifier is a, b, c,..., z
     if ('a' <= *p && *p <= 'z') {
-      tokens[idx].type = TK_IDENT;
-      tokens[idx].input = p;
+      Token *token = malloc(sizeof(Token));
+      token->type = TK_IDENT;
+      token->input = p;
       idx++;
       p++;
+      vec_push(ret, token);
       continue;
     }
 
     fprintf(stderr, "unexpected characters %s\n", p);
     exit(1);
   }
-  tokens[idx].type = TK_EOF;
-  tokens[idx].input = p;
+  Token *token = malloc(sizeof(Token));
+  token->type = TK_EOF;
+  token->input = p;
+  vec_push(ret, token);
+  return ret;
 }
 
-int parse() {
-  int i = 0;
-  while (tokens[pos].type != TK_EOF) {
-    Node *asgn = assign();
-    code[i] = asgn;
+Vector *parse(Vector *tokens) {
+  Vector *ret = new_vector();
+  ParseState *state = malloc(sizeof(ParseState));
+  state->tokens = tokens;
+  state->pos = 0;
+  while (1) {
+    Token *token = cur_token(state);
+    if (token->type == TK_EOF) {
+      break;
+    }
+
+    Node *asgn = assign(state);
+    vec_push(ret, asgn);
     // for debug
     // printf("show_node at %d\n", i);
     // show_node(asgn, 0);
-    i++;
   }
-  code[i] = NULL;
-  return i;
+
+  free(state);
+  return ret;
 }
 
-void show_tokens() {
-  int i = 0;
-  while (tokens[i].type != 0) {
-    switch (tokens[i].type) {
-    case TK_IDENT:
-      printf("%10s: %c\n", "TK_IDENT", *tokens[i].input);
-      break;
-    case TK_NUM:
-      printf("%10s: %d\n", "TK_NUM", tokens[i].value);
-      break;
-    case TK_LPAREN:
-      printf("%10s:\n", "TK_LPAREN");
-      break;
-    case TK_RPAREN:
-      printf("%10s:\n", "TK_RPAREN");
-      break;
-    case TK_EOF:
-      printf("%10s:\n", "TK_EOF");
-      break;
-    case TK_SCOLON:
-      printf("%10s:\n", "TK_SCOLON");
-      break;
-    case TK_EQ:
-      printf("%10s:\n", "TK_EQ");
-      break;
-    case TK_EQEQ:
-      printf("%10s:\n", "TK_EQEQ");
-      break;
-    default:
-      printf("%10c:\n", tokens[i].type);
-      break;
-    }
-    i++;
-  }
-}
+// void show_tokens() {
+//   int i = 0;
+//   while (tokens[i].type != 0) {
+//     switch (tokens[i].type) {
+//     case TK_IDENT:
+//       printf("%10s: %c\n", "TK_IDENT", *tokens[i].input);
+//       break;
+//     case TK_NUM:
+//       printf("%10s: %d\n", "TK_NUM", tokens[i].value);
+//       break;
+//     case TK_LPAREN:
+//       printf("%10s:\n", "TK_LPAREN");
+//       break;
+//     case TK_RPAREN:
+//       printf("%10s:\n", "TK_RPAREN");
+//       break;
+//     case TK_EOF:
+//       printf("%10s:\n", "TK_EOF");
+//       break;
+//     case TK_SCOLON:
+//       printf("%10s:\n", "TK_SCOLON");
+//       break;
+//     case TK_EQ:
+//       printf("%10s:\n", "TK_EQ");
+//       break;
+//     case TK_EQEQ:
+//       printf("%10s:\n", "TK_EQEQ");
+//       break;
+//     default:
+//       printf("%10c:\n", tokens[i].type);
+//       break;
+//     }
+//     i++;
+//   }
+// }
 
 void show_node(Node *node, int indent) {
   for (int i = 0; i < indent; i++)

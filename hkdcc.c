@@ -10,16 +10,16 @@ int main(int argc, char **argv) {
   }
 
   if (strcmp(argv[1], "-test") == 0) {
-      runtest();
-      return 0;
+    runtest();
+    return 0;
   }
 
-  tokenize(argv[1]);
+  Vector *tokens = tokenize(argv[1]);
 
   // for debug
   // show_tokens();
 
-  parse();
+  Vector *nodes = parse(tokens);
 
   printf(".intel_syntax noprefix\n");
   printf(".global _main\n");
@@ -30,11 +30,12 @@ int main(int argc, char **argv) {
   printf("  mov rbp, rsp\n");
   printf("  sub rsp, %d\n", 8 * 26);
 
-  int i = 0;
-  while (code[i]) {
-    generate(code[i++]);
+  int i;
+  for (i = 0; i < nodes->len; i++) {
+    generate(nodes->data[i]);
     printf("  pop rax\n");
   }
+
   // frame epilogue
   printf("  mov rsp, rbp\n");
   printf("  pop rbp\n");

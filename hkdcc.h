@@ -44,12 +44,6 @@ typedef struct Node {
   char name; // for ND_IDENT
 } Node;
 
-// Buffer for tokens.
-// up to 100 tokens for now...
-Token tokens[100];
-Node *code[100];
-extern int pos;
-
 // util.c
 Vector *new_vector();
 void vec_push(Vector *vec, void *elem);
@@ -61,8 +55,8 @@ void *map_get(Map *map, char *key);
 void runtest();
 
 // parser.c
-void tokenize(char *p);
-int parse();
+Vector *tokenize(char *p);
+Vector *parse();
 void show_tokens();
 void show_node(Node *node, int indent);
 
