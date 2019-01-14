@@ -71,4 +71,7 @@ try 0 "a = 0 == 1; a;"
 try 0 "1 != 1;"
 try 1 "2 != 1;"
 
+# call
+try 1 "foo();"
+
 echo OK
