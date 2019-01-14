@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# for debug, you can try `$ bash -x test.sh` 
+# for debug, you can try `$ bash -x test.sh`
 try() {
   expected="$1"
   input="$2"
@@ -50,6 +50,12 @@ try 1 "a = 1;"
 try 1 "a = 1; a;"
 try 2 "a = 1; a + 1;"
 try 2 "a = b = 1; a + b;"
+
+# var of 2 or more characters
+try 1 "ab = 1;"
+try 1 "ab = 1; ab;"
+try 2 "ab = 1; ab + 1;"
+try 2 "ab = cd = 1; ab + cd;"
 
 # eqeq
 try 1 "1 == 1;"
