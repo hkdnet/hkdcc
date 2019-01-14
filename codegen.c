@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "hkdcc.h"
 
@@ -12,7 +13,7 @@ void generate_lvalue(Node *node, Map *var_names) {
   int idx;
   for (idx = 0; idx < var_names->keys->len; idx++) {
     char *s = var_names->keys->data[idx];
-    if (s[0] == node->name) {
+    if (strcmp(s, node->name) == 0) {
       break;
     }
   }

@@ -31,7 +31,7 @@ Node *new_node_num(int value) {
   return node;
 }
 
-Node *new_node_ident(char var) {
+Node *new_node_ident(char *var) {
   Node *node = malloc(sizeof(Node));
   node->type = ND_IDENT;
   node->name = var;
@@ -53,7 +53,7 @@ Node *term(ParseState *state) {
     return ret;
   }
   if (token->type == TK_IDENT) {
-    Node *ret = new_node_ident(*token->input);
+    Node *ret = new_node_ident(token->input);
     state->pos++;
     return ret;
   }
@@ -399,12 +399,9 @@ void put_variable_name_on_node(Map *m, long *i, Node *node) {
   put_variable_name_on_node(m, i, node->lhs);
   put_variable_name_on_node(m, i, node->rhs);
   if (node->type == ND_IDENT) {
-    // TODO: how to free s?
-    char *s = malloc(sizeof(char) * 2); // c + \0
-    sprintf(s, "%c", node->name);
-    if (!map_get(m, s)) {
+    if (!map_get(m, node->name)) {
       long idx = *i;
-      map_put(m, s, (void *)idx);
+      map_put(m, node->name, (void *)idx);
       *i = *i + 1;
     }
   }

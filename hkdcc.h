@@ -40,8 +40,8 @@ typedef struct Node {
   int type; // ND_X, + or -
   struct Node *lhs;
   struct Node *rhs;
-  int value; // the value of ND_NUM
-  char name; // for ND_IDENT
+  int value;  // the value of ND_NUM
+  char *name; // for ND_IDENT
 } Node;
 
 // util.c
