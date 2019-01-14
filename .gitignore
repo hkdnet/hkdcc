@@ -1,3 +1,4 @@
 *.s
 tmp*
 build/
+compile_commands.json
