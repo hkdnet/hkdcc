@@ -163,55 +163,64 @@ Node *program(ParseState *state) {
   return new_node(ND_PROG, lhs, rhs);
 }
 
-static int is_eq = 0;
-static int is_bang = 0;
+char *tokenize_eq(char *p, Vector *tokens) {
+  if (*p != '=') {
+    fprintf(stderr, "assert error: tokenize_eq should be called with =\n");
+    exit(1);
+  }
+
+  p++; // skip "="
+
+  if (*p == '=') { // ==
+    Token *token = malloc(sizeof(Token));
+    token->type = TK_EQEQ;
+    token->input = p;
+    p++;
+    vec_push(tokens, token);
+    return p;
+  }
+
+  // single eq, such as "a = b"
+  Token *token = malloc(sizeof(Token));
+  token->type = TK_EQ;
+  token->input = p - 1;
+  vec_push(tokens, token);
+  return p;
+}
+
+char *tokenize_bang(char *p, Vector *tokens) {
+  if (*p != '!') {
+    fprintf(stderr, "assert error: tokenize_bang should be called with !\n");
+    exit(1);
+  }
+
+  p++; // skip "!"
+
+  if (*p == '=') { // !=
+    Token *token = malloc(sizeof(Token));
+    token->type = TK_NEQ;
+    token->input = p;
+    p++; // skip !=
+    vec_push(tokens, token);
+    return p;
+  }
+
+  // TODO: currently, "!" is only a part of "!=". After impl unary operator
+  // "!", this is not an error.
+  fprintf(stderr, "unexpected characters %s\n", p);
+  exit(1);
+}
 
 Vector *tokenize(char *p) {
   Vector *ret = new_vector();
   while (*p) {
     if (*p == '=') {
-      if (is_eq) {
-        Token *token = malloc(sizeof(Token));
-        token->type = TK_EQEQ;
-        token->input = p;
-        p++;
-        is_eq = 0;
-        vec_push(ret, token);
-        continue;
-      } else if (is_bang) {
-        Token *token = malloc(sizeof(Token));
-        token->type = TK_NEQ;
-        token->input = p;
-        p++;
-        vec_push(ret, token);
-        is_bang = 0;
-        continue;
-      } else {
-        is_eq = 1;
-        p++;
-        continue;
-      }
-    } else {
-      if (is_eq) {
-        Token *token = malloc(sizeof(Token));
-        token->type = TK_EQ;
-        token->input = p;
-        p++;
-        vec_push(ret, token);
-        is_eq = 0;
-        continue;
-      }
+      p = tokenize_eq(p, ret);
+      continue;
     }
 
     if (*p == '!') {
-      // TODO: currently, "!" is only a part of "!=". After impl unary operator
-      // "!", this is not an error.
-      if (is_bang) {
-        fprintf(stderr, "unexpected characters %s\n", p);
-        exit(1);
-      }
-      is_bang = 1;
-      p++;
+      p = tokenize_bang(p, ret);
       continue;
     }
 
