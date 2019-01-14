@@ -8,11 +8,17 @@
 // rbp: base register
 // rdi, rsi, rdx, rcs, r8, r9: args
 
-void generate_lvalue(Node *node) {
-  int diff = 'z' - node->name + 1;
+void generate_lvalue(Node *node, Map *var_names) {
+  int idx;
+  for (idx = 0; idx < var_names->keys->len; idx++) {
+    char *s = var_names->keys->data[idx];
+    if (s[0] == node->name) {
+      break;
+    }
+  }
   if (node->type == ND_IDENT) {
     printf("  mov rax, rbp\n");
-    printf("  sub rax, %d\n", diff * 8);
+    printf("  sub rax, %d\n", idx * 8);
     printf("  push rax\n");
     return;
   }
@@ -20,14 +26,14 @@ void generate_lvalue(Node *node) {
   exit(1);
 }
 
-void generate(Node *node) {
+void generate(Node *node, Map *var_names) {
   if (node->type == ND_NUM) {
     printf("  push %d\n", node->value);
     return;
   }
 
   if (node->type == ND_IDENT) {
-    generate_lvalue(node);
+    generate_lvalue(node, var_names);
     printf("  pop rax\n");
     printf("  mov rax, [rax]\n");
     printf("  push rax\n");
@@ -35,8 +41,8 @@ void generate(Node *node) {
   }
 
   if (node->type == ND_ASGN) {
-    generate_lvalue(node->lhs);
-    generate(node->rhs);
+    generate_lvalue(node->lhs, var_names);
+    generate(node->rhs, var_names);
 
     printf("  pop rdi\n");
     printf("  pop rax\n");
@@ -46,8 +52,8 @@ void generate(Node *node) {
   }
 
   if (node->type == ND_EQEQ || node->type == ND_NEQ) {
-    generate(node->lhs);
-    generate(node->rhs);
+    generate(node->lhs, var_names);
+    generate(node->rhs, var_names);
     printf("  pop rax\n");
     printf("  pop rdi\n");
     printf("  cmp rdi, rax\n");
@@ -58,9 +64,9 @@ void generate(Node *node) {
   }
 
   if (node->lhs)
-    generate(node->lhs);
+    generate(node->lhs, var_names);
   if (node->rhs)
-    generate(node->rhs);
+    generate(node->rhs, var_names);
 
   // two operand
   printf("  pop rdi\n");

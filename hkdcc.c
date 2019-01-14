@@ -20,20 +20,20 @@ int main(int argc, char **argv) {
   // show_tokens();
 
   Vector *nodes = parse(tokens);
+  Map *names = variable_names(nodes);
 
   printf(".intel_syntax noprefix\n");
   printf(".global _main\n");
   printf("_main:\n");
 
   // prologue
-  int var_size = 26; // a to z
   printf("  push rbp\n");
   printf("  mov rbp, rsp\n");
-  printf("  sub rsp, %d\n", 8 * var_size);
+  printf("  sub rsp, %d\n", 8 * names->keys->len);
 
   int i;
   for (i = 0; i < nodes->len; i++) {
-    generate(nodes->data[i]);
+    generate(nodes->data[i], names);
     printf("  pop rax\n");
   }
 

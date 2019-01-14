@@ -25,6 +25,8 @@ Node *new_node_num(int value) {
   Node *node = malloc(sizeof(Node));
   node->type = ND_NUM;
   node->value = value;
+  node->lhs = NULL;
+  node->rhs = NULL;
   return node;
 }
 
@@ -32,6 +34,8 @@ Node *new_node_ident(char var) {
   Node *node = malloc(sizeof(Node));
   node->type = ND_IDENT;
   node->name = var;
+  node->lhs = NULL;
+  node->rhs = NULL;
   return node;
 }
 
@@ -72,7 +76,7 @@ Node *term(ParseState *state) {
 // mul:  term "/" mul
 Node *mul(ParseState *state) {
   Node *lhs = term(state);
-  Token* token = cur_token(state);
+  Token *token = cur_token(state);
   if (token->type == '*') {
     state->pos++; // skip *
     Node *rhs = mul(state);
@@ -90,7 +94,7 @@ Node *mul(ParseState *state) {
 // expr': ε | "+" expr | "-" expr | "==" expr | "!=" expr
 Node *expr(ParseState *state) {
   Node *lhs = mul(state);
-  Token* token = cur_token(state);
+  Token *token = cur_token(state);
   if (token->type == '+') {
     state->pos++; // skip +
     Node *rhs = expr(state);
@@ -116,7 +120,7 @@ Node *expr(ParseState *state) {
 
 // assign': ε | "=" expr assign'
 Node *assign_tail(ParseState *state) {
-  Token* token = cur_token(state);
+  Token *token = cur_token(state);
   if (token->type != TK_EQ) { // ε
     return NULL;
   }
@@ -372,4 +376,31 @@ void show_node(Node *node, int indent) {
     show_node(node->lhs, indent + 2);
   if (node->rhs)
     show_node(node->rhs, indent + 2);
+}
+
+void put_variable_name_on_node(Map *m, int *i, Node *node) {
+  if (node == NULL) {
+    return;
+  }
+  put_variable_name_on_node(m, i, node->lhs);
+  put_variable_name_on_node(m, i, node->rhs);
+  if (node->type == ND_IDENT) {
+    // TODO: how to free s?
+    char *s = malloc(sizeof(char) * 2); // c + \0
+    sprintf(s, "%c", node->name);
+    if (!map_get(m, s)) {
+      int idx = *i;
+      map_put(m, s, (void *)idx);
+      *i = *i + 1;
+    }
+  }
+}
+
+Map *variable_names(Vector *nodes) {
+  Map *m = new_map();
+  int idx = 0;
+  for (int i = 0; i < nodes->len; i++) {
+    put_variable_name_on_node(m, &idx, nodes->data[i]);
+  }
+  return m;
 }
