@@ -26,9 +26,10 @@ int main(int argc, char **argv) {
   printf("_main:\n");
 
   // prologue
+  int var_size = 26; // a to z
   printf("  push rbp\n");
   printf("  mov rbp, rsp\n");
-  printf("  sub rsp, %d\n", 8 * 26);
+  printf("  sub rsp, %d\n", 8 * var_size);
 
   int i;
   for (i = 0; i < nodes->len; i++) {
