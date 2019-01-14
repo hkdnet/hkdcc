@@ -56,6 +56,7 @@ try 1 "ab = 1;"
 try 1 "ab = 1; ab;"
 try 2 "ab = 1; ab + 1;"
 try 2 "ab = cd = 1; ab + cd;"
+try 3 "a = 1; ab = 2; a + ab;"
 
 # eqeq
 try 1 "1 == 1;"
