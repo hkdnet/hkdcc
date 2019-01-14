@@ -1,11 +1,8 @@
-CFLAGS=-Wall -std=c11
 SRCS=$(wildcard *.c)
-OBJS=$(SRCS:.c=.o)
 
-bin/hkdcc: $(OBJS)
-	gcc -o $@ $^
-
-$(OBJS): hkdcc.h
+build/hkdcc: $(SRCS)
+	mkdir -p build
+	cd build && cmake ../ && make
 
 fmt: $(SRCS) hkdcc.h
 	clang-format -i $(SRCS) hkdcc.h
@@ -13,9 +10,9 @@ fmt: $(SRCS) hkdcc.h
 deps:
 	brew install clang-format # for OSX
 
-test: bin/hkdcc
-	bin/hkdcc -test
+test: build/hkdcc
+	build/hkdcc -test
 	./test.sh
 
 clean:
-	rm -f hkdcc *.o *~ tmp* bin/*
+	rm -rf build
