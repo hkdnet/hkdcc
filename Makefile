@@ -1,8 +1,10 @@
 SRCS=$(wildcard *.c)
 
-build/hkdcc: $(SRCS)
+build/hkdcc: $(SRCS) dummy.o
 	mkdir -p build
 	cd build && cmake ../ && make
+
+dummy.o: dummy.c
 
 fmt: $(SRCS) hkdcc.h
 	clang-format -i $(SRCS) hkdcc.h
