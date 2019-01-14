@@ -1,4 +1,3 @@
 *.s
-bin/
 tmp*
 build/

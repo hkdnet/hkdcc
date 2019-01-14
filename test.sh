@@ -5,9 +5,9 @@ try() {
   expected="$1"
   input="$2"
 
-  bin/hkdcc "$input" > tmp.s
-  gcc -o bin/tmp tmp.s
-  bin/tmp
+  build/hkdcc "$input" > build/tmp.s
+  gcc -o build/tmp build/tmp.s
+  build/tmp
   actual="$?"
 
   if [ "$actual" = "$expected" ]; then
