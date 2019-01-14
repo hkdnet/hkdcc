@@ -1,6 +1,7 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "hkdcc.h"
 
@@ -211,6 +212,14 @@ char *tokenize_bang(char *p, Vector *tokens) {
   exit(1);
 }
 
+int is_identifier_head(char c) {
+  return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || c == '_';
+}
+
+int is_identifier_char(char c) {
+  return is_identifier_head(c) || ('0' <= c && c <= '9');
+}
+
 Vector *tokenize(char *p) {
   Vector *ret = new_vector();
   while (*p) {
@@ -279,12 +288,18 @@ Vector *tokenize(char *p) {
     }
 
     // identifier
-    // TODO: for now, identifier is a, b, c,..., z
-    if ('a' <= *p && *p <= 'z') {
+    if (is_identifier_head(*p)) {
+      char *beg = p;
+      while (is_identifier_char(*p))
+        p++;
+      char *end = p;
+      int size = end - beg;
+      char *s = malloc(sizeof(char) * (size + 1));
+      memcpy(s, beg, size);
+      s[size] = '\0';
       Token *token = malloc(sizeof(Token));
       token->type = TK_IDENT;
-      token->input = p;
-      p++;
+      token->input = s;
       vec_push(ret, token);
       continue;
     }
