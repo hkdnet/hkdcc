@@ -378,7 +378,7 @@ void show_node(Node *node, int indent) {
     show_node(node->rhs, indent + 2);
 }
 
-void put_variable_name_on_node(Map *m, int *i, Node *node) {
+void put_variable_name_on_node(Map *m, long *i, Node *node) {
   if (node == NULL) {
     return;
   }
@@ -389,7 +389,7 @@ void put_variable_name_on_node(Map *m, int *i, Node *node) {
     char *s = malloc(sizeof(char) * 2); // c + \0
     sprintf(s, "%c", node->name);
     if (!map_get(m, s)) {
-      int idx = *i;
+      long idx = *i;
       map_put(m, s, (void *)idx);
       *i = *i + 1;
     }
@@ -398,7 +398,7 @@ void put_variable_name_on_node(Map *m, int *i, Node *node) {
 
 Map *variable_names(Vector *nodes) {
   Map *m = new_map();
-  int idx = 0;
+  long idx = 0;
   for (int i = 0; i < nodes->len; i++) {
     put_variable_name_on_node(m, &idx, nodes->data[i]);
   }

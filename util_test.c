@@ -14,7 +14,7 @@ void test_vector() {
   Vector *vec = new_vector();
   assert(__LINE__, 0, vec->len);
 
-  for (int i = 0; i < 100; i++)
+  for (long i = 0; i < 100; i++)
     vec_push(vec, (void *)i);
 
   assert(__LINE__, 100, vec->len);
