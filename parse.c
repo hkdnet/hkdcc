@@ -168,7 +168,6 @@ static int is_bang = 0;
 
 Vector *tokenize(char *p) {
   Vector *ret = new_vector();
-  int idx = 0;
   while (*p) {
     if (*p == '=') {
       if (is_eq) {
@@ -176,7 +175,6 @@ Vector *tokenize(char *p) {
         token->type = TK_EQEQ;
         token->input = p;
         p++;
-        idx++;
         is_eq = 0;
         vec_push(ret, token);
         continue;
@@ -185,7 +183,6 @@ Vector *tokenize(char *p) {
         token->type = TK_NEQ;
         token->input = p;
         p++;
-        idx++;
         vec_push(ret, token);
         is_bang = 0;
         continue;
@@ -200,7 +197,6 @@ Vector *tokenize(char *p) {
         token->type = TK_EQ;
         token->input = p;
         p++;
-        idx++;
         vec_push(ret, token);
         is_eq = 0;
         continue;
@@ -230,7 +226,6 @@ Vector *tokenize(char *p) {
       token->type = TK_SCOLON;
       token->input = p;
       p++;
-      idx++;
       vec_push(ret, token);
       continue;
     }
@@ -240,7 +235,6 @@ Vector *tokenize(char *p) {
       token->type = TK_LPAREN;
       token->input = p;
       p++;
-      idx++;
 
       vec_push(ret, token);
       continue;
@@ -250,7 +244,6 @@ Vector *tokenize(char *p) {
       token->type = TK_RPAREN;
       token->input = p;
       p++;
-      idx++;
 
       vec_push(ret, token);
       continue;
@@ -262,7 +255,6 @@ Vector *tokenize(char *p) {
       token->type = *p;
       token->input = p;
       p++;
-      idx++;
       vec_push(ret, token);
       continue;
     }
@@ -273,7 +265,6 @@ Vector *tokenize(char *p) {
       token->type = TK_NUM;
       token->input = p;
       token->value = strtol(p, &p, 10);
-      idx++;
       vec_push(ret, token);
       continue;
     }
@@ -284,7 +275,6 @@ Vector *tokenize(char *p) {
       Token *token = malloc(sizeof(Token));
       token->type = TK_IDENT;
       token->input = p;
-      idx++;
       p++;
       vec_push(ret, token);
       continue;
