@@ -41,6 +41,12 @@ void generate(Node *node, Map *var_names) {
     return;
   }
 
+  if (node->type == ND_CALL) {
+    printf("  call _%s\n", node->name); // TODO: always with underscore ?
+    printf("  push rax\n");
+    return;
+  }
+
   if (node->type == ND_ASGN) {
     generate_lvalue(node->lhs, var_names);
     generate(node->rhs, var_names);

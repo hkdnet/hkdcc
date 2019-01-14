@@ -6,7 +6,7 @@ try() {
   input="$2"
 
   build/hkdcc "$input" > build/tmp.s
-  gcc -o build/tmp build/tmp.s
+  gcc -o build/tmp dummy.o build/tmp.s
   build/tmp
   actual="$?"
 

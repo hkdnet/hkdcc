@@ -42,7 +42,7 @@ Node *new_node_ident(char *var) {
 
 Node *expr();
 
-// term: number | ident
+// term: number | ident | ident "(" ")"
 // term: "(" expr ")"
 Node *term(ParseState *state) {
   int beg = state->pos;
@@ -53,9 +53,25 @@ Node *term(ParseState *state) {
     return ret;
   }
   if (token->type == TK_IDENT) {
-    Node *ret = new_node_ident(token->input);
     state->pos++;
-    return ret;
+    Token *next = cur_token(state);
+    if (next->type != TK_LPAREN) {
+      Node *ret = new_node_ident(token->input);
+      return ret;
+    }
+    int beg = state->pos;
+    state->pos++; // skip "("
+
+    if (cur_token(state)->type == TK_RPAREN) {
+      // function call
+      Node *ret = new_node_ident(token->input); // TODO: fix this abuse
+      ret->type = ND_CALL;
+      state->pos++; // skip ")"
+      return ret;
+    }
+    fprintf(stderr, "mismatch paren for function call, begin at %d, now %d\n",
+            beg, state->pos);
+    exit(1);
   }
   if (token->type == TK_LPAREN) {
     state->pos++; // skip (
