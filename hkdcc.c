@@ -17,7 +17,7 @@ int main(int argc, char **argv) {
   Vector *tokens = tokenize(argv[1]);
 
   // for debug
-  // show_tokens();
+  // show_tokens(tokens);
 
   Vector *nodes = parse(tokens);
   Map *names = variable_names(nodes);

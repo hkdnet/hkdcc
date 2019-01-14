@@ -58,7 +58,7 @@ void runtest();
 Vector *tokenize(char *p);
 Vector *parse();
 Map *variable_names(Vector *nodes);
-void show_tokens();
+void show_tokens(Vector *tokens);
 void show_node(Node *node, int indent);
 
 // codegen.c

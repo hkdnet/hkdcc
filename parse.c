@@ -336,41 +336,40 @@ Vector *parse(Vector *tokens) {
   return ret;
 }
 
-// void show_tokens() {
-//   int i = 0;
-//   while (tokens[i].type != 0) {
-//     switch (tokens[i].type) {
-//     case TK_IDENT:
-//       printf("%10s: %c\n", "TK_IDENT", *tokens[i].input);
-//       break;
-//     case TK_NUM:
-//       printf("%10s: %d\n", "TK_NUM", tokens[i].value);
-//       break;
-//     case TK_LPAREN:
-//       printf("%10s:\n", "TK_LPAREN");
-//       break;
-//     case TK_RPAREN:
-//       printf("%10s:\n", "TK_RPAREN");
-//       break;
-//     case TK_EOF:
-//       printf("%10s:\n", "TK_EOF");
-//       break;
-//     case TK_SCOLON:
-//       printf("%10s:\n", "TK_SCOLON");
-//       break;
-//     case TK_EQ:
-//       printf("%10s:\n", "TK_EQ");
-//       break;
-//     case TK_EQEQ:
-//       printf("%10s:\n", "TK_EQEQ");
-//       break;
-//     default:
-//       printf("%10c:\n", tokens[i].type);
-//       break;
-//     }
-//     i++;
-//   }
-// }
+void show_tokens(Vector *tokens) {
+  for (int i = 0; i < tokens->len; i++) {
+    Token *token = tokens->data[i];
+    switch (token->type) {
+    case TK_IDENT:
+      printf("%10s: %s\n", "TK_IDENT", token->input);
+      break;
+    case TK_NUM:
+      printf("%10s: %d\n", "TK_NUM", token->value);
+      break;
+    case TK_LPAREN:
+      printf("%10s:\n", "TK_LPAREN");
+      break;
+    case TK_RPAREN:
+      printf("%10s:\n", "TK_RPAREN");
+      break;
+    case TK_EOF:
+      printf("%10s:\n", "TK_EOF");
+      break;
+    case TK_SCOLON:
+      printf("%10s:\n", "TK_SCOLON");
+      break;
+    case TK_EQ:
+      printf("%10s:\n", "TK_EQ");
+      break;
+    case TK_EQEQ:
+      printf("%10s:\n", "TK_EQEQ");
+      break;
+    default:
+      printf("%10c:\n", token->type);
+      break;
+    }
+  }
+}
 
 void show_node(Node *node, int indent) {
   for (int i = 0; i < indent; i++)
