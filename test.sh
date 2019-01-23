@@ -73,5 +73,6 @@ try 1 "2 != 1;"
 
 # call
 try 1 "foo();"
+try 3 "bar(1, 2);"
 
 echo OK
