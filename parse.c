@@ -43,12 +43,13 @@ Node *new_node_ident(char *var) {
 Node *expr();
 
 // arguments: ε | expr "," arguments
-Node *arguments(ParseState *state) {
+Node *arguments(ParseState *state, int *argc) {
   Token *token = cur_token(state);
   if (token->type == TK_RPAREN) { // ()
     return NULL;
   }
   Node *lhs = expr(state);
+  *argc = *argc + 1;
   token = cur_token(state);
 
   if (token->type == TK_RPAREN) {
@@ -59,7 +60,7 @@ Node *arguments(ParseState *state) {
     exit(1);
   }
   state->pos++; // skip ","
-  Node *rhs = arguments(state);
+  Node *rhs = arguments(state, argc);
   return new_node(ND_ARGS, lhs, rhs);
 }
 
@@ -83,13 +84,15 @@ Node *term(ParseState *state) {
     int beg = state->pos;
     state->pos++; // skip "("
 
-    Node* args = arguments(state);
+    int argc = 0;
+    Node *args = arguments(state, &argc);
 
     if (cur_token(state)->type == TK_RPAREN) {
       // function call
       Node *ret = new_node_ident(token->input); // TODO: fix this abuse
       ret->type = ND_CALL;
       ret->lhs = args;
+      ret->value = argc;
       state->pos++; // skip ")"
       return ret;
     }
