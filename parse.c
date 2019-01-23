@@ -42,7 +42,28 @@ Node *new_node_ident(char *var) {
 
 Node *expr();
 
-// term: number | ident | ident "(" ")"
+// arguments: ε | expr "," arguments
+Node *arguments(ParseState *state) {
+  Token *token = cur_token(state);
+  if (token->type == TK_RPAREN) { // ()
+    return NULL;
+  }
+  Node *lhs = expr(state);
+  token = cur_token(state);
+
+  if (token->type == TK_RPAREN) {
+    return new_node(ND_ARGS, lhs, NULL);
+  }
+  if (token->type != TK_COMMA) {
+    fprintf(stderr, "missing comma after an argument at %d\n", state->pos);
+    exit(1);
+  }
+  state->pos++; // skip ","
+  Node *rhs = arguments(state);
+  return new_node(ND_ARGS, lhs, rhs);
+}
+
+// term: number | ident | ident "(" arguments ")"
 // term: "(" expr ")"
 Node *term(ParseState *state) {
   int beg = state->pos;
@@ -62,10 +83,13 @@ Node *term(ParseState *state) {
     int beg = state->pos;
     state->pos++; // skip "("
 
+    Node* args = arguments(state);
+
     if (cur_token(state)->type == TK_RPAREN) {
       // function call
       Node *ret = new_node_ident(token->input); // TODO: fix this abuse
       ret->type = ND_CALL;
+      ret->lhs = args;
       state->pos++; // skip ")"
       return ret;
     }

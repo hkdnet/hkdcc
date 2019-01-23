@@ -36,6 +36,7 @@ enum {
   ND_EQEQ,
   ND_NEQ,
   ND_CALL,
+  ND_ARGS,
 };
 
 typedef struct Node {
