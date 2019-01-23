@@ -282,6 +282,15 @@ Vector *tokenize(char *p) {
       vec_push(ret, token);
       continue;
     }
+    if (*p == ',') {
+      Token *token = malloc(sizeof(Token));
+      token->type = TK_COMMA;
+      token->input = p;
+      p++;
+
+      vec_push(ret, token);
+      continue;
+    }
 
     // operator
     if (*p == '+' || *p == '-' || *p == '*' || *p == '/') {
