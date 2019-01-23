@@ -18,6 +18,7 @@ enum {
   TK_EQ,        // =
   TK_EQEQ,      // ==
   TK_NEQ,       // !=
+  TK_COMMA,     // ,
   TK_EOF,
 };
 
