@@ -43,7 +43,7 @@ typedef struct Node {
   int type; // ND_X, + or -
   struct Node *lhs;
   struct Node *rhs;
-  int value;  // the value of ND_NUM
+  int value;  // the value of ND_NUM or argc for ND_ARGS
   char *name; // for ND_IDENT
 } Node;
 
