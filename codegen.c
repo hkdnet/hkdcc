@@ -9,6 +9,8 @@
 // rbp: base register
 // rdi, rsi, rdx, rcs, r8, r9: args
 
+static char *arg_registers[7] = {"", "rdi", "rsi", "rdx", "rcs", "r8", "r9"};
+
 void generate_lvalue(Node *node, Map *var_names) {
   int idx;
   for (idx = 0; idx < var_names->keys->len; idx++) {
@@ -42,8 +44,22 @@ void generate(Node *node, Map *var_names) {
   }
 
   if (node->type == ND_CALL) {
+    if (node->lhs) {
+      generate(node->lhs, var_names);
+      for (int i = node->value; i > 0; i--) {
+        printf("  pop %s\n", arg_registers[i]);
+      }
+    }
     printf("  call _%s\n", node->name); // TODO: always with underscore ?
     printf("  push rax\n");
+    return;
+  }
+
+  if (node->type == ND_ARGS) {
+    generate(node->lhs, var_names);
+    if (node->rhs) {
+      generate(node->rhs, var_names);
+    }
     return;
   }
 
