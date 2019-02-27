@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "hkdcc.h"
@@ -22,24 +23,22 @@ int main(int argc, char **argv) {
   Vector *nodes = parse(tokens);
   Map *names = variable_names(nodes);
 
+  Node *main = malloc(sizeof(Node));
+  main->type = ND_FUNC;
+  main->name = "_main";
+  Node *main_decl = malloc(sizeof(Node));
+  main_decl->type = ND_FUNC_DECL;
+  main_decl->parameters = nodes;
+  Node *main_body = malloc(sizeof(Node));
+  main_body->type = ND_FUNC_BODY;
+  main_body->expressions = nodes;
+  main_body->variable_names = names;
+  main->lhs = main_decl;
+  main->rhs = main_body;
+
   printf(".intel_syntax noprefix\n");
   printf(".global _main\n");
-  printf("_main:\n");
 
-  // prologue
-  printf("  push rbp\n");
-  printf("  mov rbp, rsp\n");
-  printf("  sub rsp, %d\n", 8 * names->keys->len);
-
-  int i;
-  for (i = 0; i < nodes->len; i++) {
-    generate(nodes->data[i], names);
-    printf("  pop rax\n");
-  }
-
-  // frame epilogue
-  printf("  mov rsp, rbp\n");
-  printf("  pop rbp\n");
-  printf("  ret\n");
+  generate(main, NULL);
   return 0;
 }
