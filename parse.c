@@ -191,20 +191,84 @@ Node *assign(ParseState *state) {
     }
     return new_node(ND_ASGN, lhs, rhs);
   }
-  fprintf(stderr, "unexpected token at %d\n", state->pos);
+  fprintf(stderr, "unexpected token at %d: %s\n", state->pos, token->input);
   exit(1);
 }
 
-// program : assign program'
-// program': ε | assign program'
-Node *program(ParseState *state) {
-  Node *lhs = assign(state);
-  Token *token = cur_token(state);
-  if (token->type == TK_EOF) {
-    return lhs;
+// func_body: assign func_body'
+// func_body': ε | assign func_body'
+Node *func_body(ParseState *state) {
+  Vector *expressions = new_vector();
+  while (1) {
+    Token *token = cur_token(state);
+    if (token->type == TK_RBRACE) {
+      break;
+    }
+
+    Node *asgn = assign(state);
+    vec_push(expressions, asgn);
   }
-  Node *rhs = assign(state);
-  return new_node(ND_PROG, lhs, rhs);
+
+  Node *func_body = new_node(ND_FUNC_BODY, NULL, NULL);
+
+  Map *names = variable_names(expressions);
+  func_body->variable_names = names;
+  func_body->expressions = expressions;
+  return func_body;
+}
+
+// func_decl: ident "(" ")" "{" func_body "}"
+Node *func_decl(ParseState *state) {
+  Token *token = cur_token(state);
+  if (token->type != TK_IDENT) {
+    return NULL;
+  }
+  char *ident = token->input;
+  state->pos++; // skip ident
+  token = cur_token(state);
+  if (token->type != TK_LPAREN) {
+    fprintf(stderr, "unexpected token at %d: expect ( but got %s\n", state->pos,
+            token->input);
+    exit(1);
+  }
+  state->pos++; // skip "("
+  token = cur_token(state);
+  if (token->type != TK_RPAREN) {
+    fprintf(stderr, "unexpected token at %d: expect ) but got %s\n", state->pos,
+            token->input);
+    exit(1);
+  }
+  state->pos++; // skip ")"
+  token = cur_token(state);
+  if (token->type != TK_LBRACE) {
+    fprintf(stderr, "unexpected token at %d: expect { but got %s\n", state->pos,
+            token->input);
+    exit(1);
+  }
+  state->pos++; // skip "{"
+
+  Node *rhs = func_body(state);
+
+  token = cur_token(state);
+  if (token->type != TK_RBRACE) {
+    fprintf(stderr, "unexpected token at %d: expect } but got %s\n", state->pos,
+            token->input);
+    exit(1);
+  }
+  state->pos++; // skip "}"
+
+  Node *node = new_node_ident(ident);
+  node->type = ND_FUNC;
+  node->rhs = rhs;
+
+  return node;
+}
+
+// program : func_decl
+// TODO: 複数関数定義に対応する
+Node *program(ParseState *state) {
+  Node *lhs = func_decl(state);
+  return new_node(ND_PROG, lhs, NULL);
 }
 
 char *tokenize_eq(char *p, Vector *tokens) {
@@ -384,26 +448,15 @@ Vector *tokenize(char *p) {
   return ret;
 }
 
-Vector *parse(Vector *tokens) {
+Node *parse(Vector *tokens) {
   Vector *ret = new_vector();
   ParseState *state = malloc(sizeof(ParseState));
   state->tokens = tokens;
   state->pos = 0;
-  while (1) {
-    Token *token = cur_token(state);
-    if (token->type == TK_EOF) {
-      break;
-    }
-
-    Node *asgn = assign(state);
-    vec_push(ret, asgn);
-    // for debug
-    // printf("show_node at %d\n", i);
-    // show_node(asgn, 0);
-  }
+  Node *prog = program(state);
 
   free(state);
-  return ret;
+  return prog;
 }
 
 void show_tokens(Vector *tokens) {

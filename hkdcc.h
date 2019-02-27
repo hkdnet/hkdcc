@@ -72,7 +72,7 @@ void runtest();
 // parser.c
 Vector *tokenize(char *p);
 
-Vector *parse();
+Node *parse();
 
 Map *variable_names(Vector *nodes);
 
