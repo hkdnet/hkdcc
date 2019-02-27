@@ -449,7 +449,6 @@ Vector *tokenize(char *p) {
 }
 
 Node *parse(Vector *tokens) {
-  Vector *ret = new_vector();
   ParseState *state = malloc(sizeof(ParseState));
   state->tokens = tokens;
   state->pos = 0;
