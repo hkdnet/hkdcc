@@ -30,6 +30,29 @@ void generate_lvalue(Node *node, Map *var_names) {
 }
 
 void generate(Node *node, Map *var_names) {
+  if (node->type == ND_FUNC) {
+    // Node *decl = node->lhs;
+    Node *body = node->rhs;
+
+    // prologue
+    printf("_%s:\n", node->name);
+    printf("  push rbp\n");
+    printf("  mov rbp, rsp\n");
+    printf("  sub rsp, %d\n", 8 * body->variable_names->keys->len);
+    Vector *expressions = body->expressions;
+    int i;
+    for (i = 0; i < expressions->len; i++) {
+      generate(expressions->data[i], body->variable_names);
+      printf("  pop rax\n");
+    }
+
+    // frame epilogue
+    printf("  mov rsp, rbp\n");
+    printf("  pop rbp\n");
+    printf("  ret\n");
+    return;
+  }
+
   if (node->type == ND_NUM) {
     printf("  push %d\n", node->value);
     return;

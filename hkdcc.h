@@ -37,6 +37,9 @@ enum {
   ND_NEQ,
   ND_CALL,
   ND_ARGS,
+  ND_FUNC,
+  ND_FUNC_DECL,
+  ND_FUNC_BODY,
 };
 
 typedef struct Node {
@@ -45,13 +48,20 @@ typedef struct Node {
   struct Node *rhs;
   int value;  // the value of ND_NUM or argc for ND_ARGS
   char *name; // for ND_IDENT
+  Vector *parameters;
+  Map *variable_names;
+  Vector *expressions;
 } Node;
 
 // util.c
 Vector *new_vector();
+
 void vec_push(Vector *vec, void *elem);
+
 Map *new_map();
+
 void map_put(Map *map, void *key, void *value);
+
 void *map_get(Map *map, char *key);
 
 // util_test.c
@@ -59,9 +69,13 @@ void runtest();
 
 // parser.c
 Vector *tokenize(char *p);
+
 Vector *parse();
+
 Map *variable_names(Vector *nodes);
+
 void show_tokens(Vector *tokens);
+
 void show_node(Node *node, int indent);
 
 // codegen.c
