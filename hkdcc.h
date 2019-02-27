@@ -52,7 +52,10 @@ typedef struct Node {
   char *name; // for ND_IDENT
   Vector *parameters;
   Map *variable_names;
-  Vector *expressions;
+  union {
+    Vector *expressions; // for ND_FUNC_BODY
+    Vector *functions;   // for ND_PROG
+  };
 } Node;
 
 // util.c

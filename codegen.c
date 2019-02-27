@@ -30,6 +30,13 @@ void generate_lvalue(Node *node, Map *var_names) {
 }
 
 void generate(Node *node, Map *var_names) {
+  if (node->type == ND_PROG) {
+    Vector *functions = node->functions;
+    for (int i = 0; i < functions->len; i++) {
+      generate(functions->data[i], var_names);
+    }
+    return;
+  }
   if (node->type == ND_FUNC) {
     // Node *decl = node->lhs;
     Node *body = node->rhs;

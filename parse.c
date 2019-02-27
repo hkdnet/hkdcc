@@ -264,11 +264,21 @@ Node *func_decl(ParseState *state) {
   return node;
 }
 
-// program : func_decl
-// TODO: 複数関数定義に対応する
+// program  : program'
+// program' : ε | func_decl program'
 Node *program(ParseState *state) {
-  Node *lhs = func_decl(state);
-  return new_node(ND_PROG, lhs, NULL);
+  Vector *functions = new_vector();
+  while (1) {
+    Token *token = cur_token(state);
+    if (token->type == TK_EOF) {
+      break;
+    }
+    Node *func = func_decl(state);
+    vec_push(functions, func);
+  }
+  Node *prog = new_node(ND_PROG, NULL, NULL);
+  prog->functions = functions;
+  return prog;
 }
 
 char *tokenize_eq(char *p, Vector *tokens) {
