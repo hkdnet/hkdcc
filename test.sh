@@ -71,5 +71,11 @@ try 1 'main() { 2 != 1; }'
 try 1 'main() { foo(); }'
 try 3 'main() { bar(1, 2); }'
 
+# funcdef
+try 3 "
+my_func() { 3; }
+main() { my_func(); }
+"
+
 echo OK
 
