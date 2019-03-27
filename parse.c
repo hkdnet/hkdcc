@@ -217,7 +217,7 @@ Node *func_body(ParseState *state) {
   return func_body;
 }
 
-// func_decl: ident "(" ")" "{" func_body "}"
+// func_decl: ident "(" param ")" "{" func_body "}"
 Node *func_decl(ParseState *state) {
   Token *token = cur_token(state);
   if (token->type != TK_IDENT) {
@@ -232,12 +232,38 @@ Node *func_decl(ParseState *state) {
     exit(1);
   }
   state->pos++; // skip "("
-  token = cur_token(state);
-  if (token->type != TK_RPAREN) {
-    fprintf(stderr, "unexpected token at %d: expect ) but got %s\n", state->pos,
-            token->input);
-    exit(1);
+
+  Vector *parameters = new_vector();
+
+  while (1) {
+    token = cur_token(state);
+    if (token->type == TK_RPAREN) {
+      break;
+    }
+    if (token->type != TK_IDENT) {
+      fprintf(stderr, "unexpected token at %d: expect identifier but got %s\n",
+              state->pos, token->input);
+    }
+
+    vec_push(parameters, token->input);
+    state->pos++; // skip IDENT
+
+    token = cur_token(state);
+
+    if (token->type == TK_COMMA) {
+      state->pos++; // skip COMMA
+    } else if (token->type == TK_RPAREN) {
+      break;
+    } else {
+      fprintf(stderr, "unexpected token at %d: expect , or ) but got %s\n",
+              state->pos, token->input);
+      exit(1);
+    }
   }
+
+  Node *lhs = new_node(ND_FUNC_DECL, NULL, NULL);
+  lhs->parameters = parameters;
+
   state->pos++; // skip ")"
   token = cur_token(state);
   if (token->type != TK_LBRACE) {
@@ -259,6 +285,7 @@ Node *func_decl(ParseState *state) {
 
   Node *node = new_node_ident(ident);
   node->type = ND_FUNC;
+  node->lhs = lhs;
   node->rhs = rhs;
 
   return node;
