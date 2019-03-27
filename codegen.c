@@ -38,7 +38,7 @@ void generate(Node *node, Map *var_names) {
     return;
   }
   if (node->type == ND_FUNC) {
-    // Node *decl = node->lhs;
+    Node *decl = node->lhs;
     Node *body = node->rhs;
 
     // prologue
@@ -46,8 +46,34 @@ void generate(Node *node, Map *var_names) {
     printf("  push rbp\n");
     printf("  mov rbp, rsp\n");
     printf("  sub rsp, %d\n", 8 * body->variable_names->keys->len);
-    Vector *expressions = body->expressions;
+
     int i;
+    for (i = 0; i < decl->parameters->len; i++) {
+      char *parameter_name = decl->parameters->data[i];
+      int idx;
+      for (idx = 0; idx < body->variable_names->keys->len; idx++) {
+        char *s = body->variable_names->keys->data[idx];
+        if (strcmp(s, parameter_name) == 0) {
+          break;
+        }
+      }
+      if (idx == body->variable_names->keys->len) {
+        fprintf(stderr, "parameter %s is not found in local variables\n",
+                parameter_name);
+        exit(1);
+      }
+
+      printf("  mov rax, rbp\n");
+      printf("  sub rax, %d\n", idx * 8);
+      printf("  push rax\n");
+      printf("  push %s\n", arg_registers[i + 1]);
+      printf("  pop rdi\n");
+      printf("  pop rax\n");
+      printf("  mov [rax], rdi\n");
+      printf("  push rdi\n");
+    }
+
+    Vector *expressions = body->expressions;
     for (i = 0; i < expressions->len; i++) {
       generate(expressions->data[i], body->variable_names);
       printf("  pop rax\n");
