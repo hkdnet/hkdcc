@@ -43,9 +43,10 @@ void generate(Node *node, Map *var_names) {
 
     // prologue
     printf("_%s:\n", node->name);
-    printf("  push rbp\n");
-    printf("  mov rbp, rsp\n");
-    printf("  sub rsp, %d\n", 8 * body->variable_names->keys->len);
+    printf("  push rbp # 現在のスタック位置 rbp を積む\n");
+    printf("  mov rbp, rsp # rbp <- rsp\n");
+    printf("  sub rsp, %d # rsp <- rsp - NUM: ローカル変数分の領域を確保\n", 8 * body->variable_names->keys->len);
+    // memo: ローカル変数へのアクセスは rbp - 8*n になる
 
     int i;
     for (i = 0; i < decl->parameters->len; i++) {
@@ -63,14 +64,11 @@ void generate(Node *node, Map *var_names) {
         exit(1);
       }
 
-      printf("  mov rax, rbp\n");
-      printf("  sub rax, %d\n", idx * 8);
-      printf("  push rax\n");
+      printf("  mov rax, rbp # rax <- rbp\n");
+      printf("  sub rax, %d # rax <- rax - NUM\n", (idx + 1) * 8);
       printf("  push %s\n", arg_registers[i + 1]);
       printf("  pop rdi\n");
-      printf("  pop rax\n");
-      printf("  mov [rax], rdi\n");
-      printf("  push rdi\n");
+      printf("  mov [rax], rdi # [rax] <- rdi\n");
     }
 
     Vector *expressions = body->expressions;
