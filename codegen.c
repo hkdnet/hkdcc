@@ -64,10 +64,10 @@ void generate(Node *node, Map *var_names) {
         exit(1);
       }
 
-      printf("  mov rax, rbp # rax <- rbp\n");
-      printf("  sub rax, %d # rax <- rax - NUM\n", (idx + 1) * 8);
-      printf("  push %s\n", arg_registers[i + 1]);
-      printf("  pop rdi\n");
+      printf("  mov rax, rbp   # rax <- rbp\n");
+      printf("  sub rax, %d    # rax <- rax - NUM\n", (idx + 1) * 8);
+      printf("  push %s        # push argument value\n", arg_registers[i + 1]);
+      printf("  pop rdi        # pop to rdi\n");
       printf("  mov [rax], rdi # [rax] <- rdi\n");
     }
 
