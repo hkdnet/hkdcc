@@ -557,9 +557,9 @@ void put_variable_name_on_node(Map *m, long *i, Node *node) {
   put_variable_name_on_node(m, i, node->lhs);
   put_variable_name_on_node(m, i, node->rhs);
   if (node->type == ND_IDENT) {
-    if (!map_get(m, node->name)) {
+    if (map_get(m, node->name) == NULL) {
       long idx = *i;
-      map_put(m, node->name, (void *)idx);
+      map_put(m, node->name, (void *)idx - 1);
       *i = *i + 1;
     }
   }
@@ -567,7 +567,7 @@ void put_variable_name_on_node(Map *m, long *i, Node *node) {
 
 Map *variable_names(Vector *nodes) {
   Map *m = new_map();
-  long idx = 0;
+  long idx = 1;
   for (int i = 0; i < nodes->len; i++) {
     put_variable_name_on_node(m, &idx, nodes->data[i]);
   }
