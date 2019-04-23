@@ -74,13 +74,15 @@ void generate(Node *node, Vector *var_names) {
 
     Vector *expressions = body->expressions;
     for (i = 0; i < expressions->len; i++) {
+      printf("  # -- expr%d START --\n", i);
       generate(expressions->data[i], body->variable_names);
       printf("  pop rax\n");
+      printf("  # -- expr%d END --\n", i);
     }
 
     // frame epilogue
-    printf("  mov rsp, rbp\n");
-    printf("  pop rbp\n");
+    printf("  mov rsp, rbp # rsp <- rbp\n");
+    printf("  pop rbp      # pop to rbp \n");
     printf("  ret\n");
     return;
   }
