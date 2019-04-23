@@ -45,11 +45,6 @@ void generate(Node *node, Vector *var_names) {
     printf("_%s:\n", node->name);
     printf("  push rbp # 現在のスタック位置 rbp を積む\n");
     printf("  mov rbp, rsp # rbp <- rsp\n");
-    int j;
-    for (j = 0; j < body->variable_names->len; j++) {
-      char *ident = body->variable_names->data[j];
-      printf("%d -> %s\n", j, ident);
-    }
     printf("  sub rsp, %d # rsp <- rsp - NUM: ローカル変数分の領域を確保\n",
            8 * body->variable_names->len);
     // memo: ローカル変数へのアクセスは rbp - 8*n になる
