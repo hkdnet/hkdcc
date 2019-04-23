@@ -77,8 +77,6 @@ Vector *tokenize(char *p);
 
 Node *parse();
 
-Map *variable_names(Vector *nodes);
-
 void show_tokens(Vector *tokens);
 
 void show_node(Node *node, int indent);

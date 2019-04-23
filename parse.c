@@ -195,6 +195,8 @@ Node *assign(ParseState *state) {
   exit(1);
 }
 
+Map *variable_names(Vector *nodes);
+
 // func_body: assign func_body'
 // func_body': ε | assign func_body'
 Node *func_body(ParseState *state) {
