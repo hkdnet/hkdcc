@@ -43,9 +43,9 @@ void generate(Node *node, Vector *var_names) {
 
     // prologue
     printf("_%s:\n", node->name);
-    printf("  push rbp # 現在のスタック位置 rbp を積む\n");
-    printf("  mov rbp, rsp # rbp <- rsp\n");
-    printf("  sub rsp, %d # rsp <- rsp - NUM: ローカル変数分の領域を確保\n",
+    printf("  push rbp       # 現在のスタック位置 rbp を積む\n");
+    printf("  mov rbp, rsp   # rbp <- rsp\n");
+    printf("  sub rsp, %d     # rsp <- rsp - NUM: ローカル変数分の領域を確保\n",
            8 * body->variable_names->len);
     // memo: ローカル変数へのアクセスは rbp - 8*n になる
 
@@ -66,8 +66,8 @@ void generate(Node *node, Vector *var_names) {
       }
 
       printf("  mov rax, rbp   # rax <- rbp\n");
-      printf("  sub rax, %d    # rax <- rax - NUM\n", (idx + 1) * 8);
-      printf("  push %s        # push argument value\n", arg_registers[i + 1]);
+      printf("  sub rax, %d     # rax <- rax - NUM\n", (idx + 1) * 8);
+      printf("  push %s       # push argument value\n", arg_registers[i + 1]);
       printf("  pop rdi        # pop to rdi\n");
       printf("  mov [rax], rdi # [rax] <- rdi\n");
     }
