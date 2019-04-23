@@ -50,7 +50,7 @@ typedef struct Node {
   struct Node *rhs;
   int value;  // the value of ND_NUM or argc for ND_ARGS
   char *name; // for ND_IDENT
-  Map *variable_names;
+  Vector *variable_names;
   union {
     Vector *expressions; // for ND_FUNC_BODY
     Vector *parameters;  // for ND_FUNC_DECL
@@ -82,4 +82,4 @@ void show_tokens(Vector *tokens);
 void show_node(Node *node, int indent);
 
 // codegen.c
-void generate(Node *node, Map *var_names);
+void generate(Node *node, Vector *var_names);

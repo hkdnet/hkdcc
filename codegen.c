@@ -11,10 +11,10 @@
 
 static char *arg_registers[7] = {"", "rdi", "rsi", "rdx", "rcs", "r8", "r9"};
 
-void generate_lvalue(Node *node, Map *var_names) {
+void generate_lvalue(Node *node, Vector *var_names) {
   int idx;
-  for (idx = 0; idx < var_names->keys->len; idx++) {
-    char *s = var_names->keys->data[idx];
+  for (idx = 0; idx < var_names->len; idx++) {
+    char *s = var_names->data[idx];
     if (strcmp(s, node->name) == 0) {
       break;
     }
@@ -29,7 +29,7 @@ void generate_lvalue(Node *node, Map *var_names) {
   exit(1);
 }
 
-void generate(Node *node, Map *var_names) {
+void generate(Node *node, Vector *var_names) {
   if (node->type == ND_PROG) {
     Vector *functions = node->functions;
     for (int i = 0; i < functions->len; i++) {
@@ -46,27 +46,25 @@ void generate(Node *node, Map *var_names) {
     printf("  push rbp # 現在のスタック位置 rbp を積む\n");
     printf("  mov rbp, rsp # rbp <- rsp\n");
     int j;
-    for (j = 0; j < body->variable_names->keys->len; j++) {
-    char *k;
-    char *v;
-    k = body->variable_names->keys->data[j];
-     v = body->variable_names->values->data[j];
-        printf("%s -> %s\n", k, v);
+    for (j = 0; j < body->variable_names->len; j++) {
+      char *ident = body->variable_names->data[j];
+      printf("%d -> %s\n", j, ident);
     }
-    printf("  sub rsp, %d # rsp <- rsp - NUM: ローカル変数分の領域を確保\n", 8 * body->variable_names->keys->len);
+    printf("  sub rsp, %d # rsp <- rsp - NUM: ローカル変数分の領域を確保\n",
+           8 * body->variable_names->len);
     // memo: ローカル変数へのアクセスは rbp - 8*n になる
 
     int i;
     for (i = 0; i < decl->parameters->len; i++) {
       char *parameter_name = decl->parameters->data[i];
       int idx;
-      for (idx = 0; idx < body->variable_names->keys->len; idx++) {
-        char *s = body->variable_names->keys->data[idx];
+      for (idx = 0; idx < body->variable_names->len; idx++) {
+        char *s = body->variable_names->data[idx];
         if (strcmp(s, parameter_name) == 0) {
           break;
         }
       }
-      if (idx == body->variable_names->keys->len) {
+      if (idx == body->variable_names->len) {
         fprintf(stderr, "parameter %s is not found in local variables\n",
                 parameter_name);
         exit(1);
