@@ -7,7 +7,7 @@ main() { my_func2(3); }
 echo "-----------------"
 
 build/hkdcc "
-my_func2() { 3 + 1; }
+my_func2() { a = 3; a + 1; }
 main() { my_func2(); }
 "
 
