@@ -102,6 +102,7 @@ void generate(Node *node, Vector *var_names) {
     printf("  je .Lend%03d\n", ++label_count);
     generate(node->rhs, var_names);
     printf(".Lend%03d:\n", label_count);
+    printf("  push rax\n");
     return;
   }
 
