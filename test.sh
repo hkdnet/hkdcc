@@ -80,6 +80,8 @@ try 0 'main() { if (1) return 0; return 1; }'
 try 1 'main() { if (0) return 0; return 1; }'
 try 0 'main() { if (1) if(1) return 0; return 1; }'
 try 1 'main() { if (1) if(0) return 0; return 1; }'
+try 0 'main() { a = 1; if (1) a = 0; return a; }'
+try 1 'main() { a = 1; if (0) a = 0; return a; }'
 
 # while
 try 0 'main() { a = 3; while (a != 0) a = baz(a); return a; }'
