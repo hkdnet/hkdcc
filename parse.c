@@ -187,7 +187,6 @@ Node *assign(ParseState *state) {
 
   Token *token = cur_token(state);
   if (token->type == TK_SCOLON) { // ε
-    state->pos++;                 // skip ;
     if (!rhs) {
       return lhs;
     }
@@ -197,10 +196,25 @@ Node *assign(ParseState *state) {
   exit(1);
 }
 
+// statement: "return" assign ";"
+// statement: assign ";"
+Node *statement(ParseState *state) {
+  if (CUR_TOKEN->type == TK_RETURN) {
+    INCR_POS; // skip "return"
+    Node*asgn = assign(state);
+    Node* ret = new_node(ND_RET, asgn, NULL);
+    INCR_POS; // skip ";"
+    return ret;
+  }
+  Node *asgn = assign(state);
+  INCR_POS; // skip ";"
+  return asgn;
+}
+
 Vector *variable_names(Vector *nodes);
 
-// func_body: assign func_body'
-// func_body': ε | assign func_body'
+// func_body: stmt func_body'
+// func_body': ε | stmt func_body'
 Node *func_body(ParseState *state) {
   Vector *expressions = new_vector();
   while (1) {
@@ -209,8 +223,8 @@ Node *func_body(ParseState *state) {
       break;
     }
 
-    Node *asgn = assign(state);
-    vec_push(expressions, asgn);
+    Node *stmt = statement(state);
+    vec_push(expressions, stmt);
   }
 
   Node *func_body = new_node(ND_FUNC_BODY, NULL, NULL);
