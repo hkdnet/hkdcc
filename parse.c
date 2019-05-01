@@ -172,7 +172,7 @@ Node *assign_tail(ParseState *state) {
   return new_node(ND_ASGN, lhs, rhs);
 }
 
-// assign : expr assign' ";"
+// assign : expr assign'
 // assign': ε | "=" expr assign'
 Node *assign(ParseState *state) {
   Node *lhs = expr(state);
