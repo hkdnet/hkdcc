@@ -411,6 +411,52 @@ char *tokenize_bang(char *p, Vector *tokens) {
   exit(1);
 }
 
+char *tokenize_lt(char *p, Vector *tokens) {
+  if (*p != '<') {
+    fprintf(stderr, "assert error: tokenize_lt should be called with <\n");
+    exit(1);
+  }
+  char* beg = p;
+  p++; // skip "<"
+
+  if (*p == '=') { // <=
+    Token *token = malloc(sizeof(Token));
+    token->type = TK_LTEQ;
+    token->input = beg;
+    p++; // skip =
+    vec_push(tokens, token);
+    return p;
+  }
+
+  Token *token = malloc(sizeof(Token));
+  token->type = TK_LT;
+  token->input = beg;
+  return p;
+}
+
+char *tokenize_gt(char *p, Vector *tokens) {
+  if (*p != '>') {
+    fprintf(stderr, "assert error: tokenize_lt should be called with >\n");
+    exit(1);
+  }
+  char* beg = p;
+  p++; // skip ">"
+
+  if (*p == '=') { // >=
+    Token *token = malloc(sizeof(Token));
+    token->type = TK_GTEQ;
+    token->input = beg;
+    p++; // skip =
+    vec_push(tokens, token);
+    return p;
+  }
+
+  Token *token = malloc(sizeof(Token));
+  token->type = TK_GT;
+  token->input = beg;
+  return p;
+}
+
 int is_identifier_head(char c) {
   return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || c == '_';
 }
@@ -429,6 +475,16 @@ Vector *tokenize(char *p) {
 
     if (*p == '!') {
       p = tokenize_bang(p, ret);
+      continue;
+    }
+
+    if (*p == '<') {
+      p = tokenize_lt(p, ret);
+      continue;
+    }
+
+    if (*p == '>') {
+      p = tokenize_gt(p, ret);
       continue;
     }
 
@@ -595,6 +651,10 @@ void show_tokens(Vector *tokens) {
       SHOW_TOKEN_CASE(TK_EQ)
       SHOW_TOKEN_CASE(TK_EQEQ)
       SHOW_TOKEN_CASE(TK_NEQ)
+      SHOW_TOKEN_CASE(TK_LTEQ)
+      SHOW_TOKEN_CASE(TK_LT)
+      SHOW_TOKEN_CASE(TK_GTEQ)
+      SHOW_TOKEN_CASE(TK_GT)
       SHOW_TOKEN_CASE(TK_COMMA)
       SHOW_TOKEN_CASE(TK_LBRACE)
       SHOW_TOKEN_CASE(TK_RBRACE)
