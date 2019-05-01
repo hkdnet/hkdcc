@@ -201,8 +201,8 @@ Node *assign(ParseState *state) {
 Node *statement(ParseState *state) {
   if (CUR_TOKEN->type == TK_RETURN) {
     INCR_POS; // skip "return"
-    Node*asgn = assign(state);
-    Node* ret = new_node(ND_RET, asgn, NULL);
+    Node *asgn = assign(state);
+    Node *ret = new_node(ND_RET, asgn, NULL);
     INCR_POS; // skip ";"
     return ret;
   }
@@ -522,27 +522,31 @@ Node *parse(Vector *tokens) {
   return prog;
 }
 
-#define SHOW_TOKEN_CASE(name) case name: \
-  if (token->input == NULL) printf("%10s:\n", #name); else printf("%10s: %s\n", #name, token->input); \
-  break;
+#define SHOW_TOKEN_CASE(name)                                                  \
+  case name:                                                                   \
+    if (token->input == NULL)                                                  \
+      printf("%10s:\n", #name);                                                \
+    else                                                                       \
+      printf("%10s: %s\n", #name, token->input);                               \
+    break;
 
 void show_tokens(Vector *tokens) {
   for (int i = 0; i < tokens->len; i++) {
     Token *token = tokens->data[i];
     switch (token->type) {
-    SHOW_TOKEN_CASE(TK_NUM)
-    SHOW_TOKEN_CASE(TK_LPAREN)
-    SHOW_TOKEN_CASE(TK_RPAREN)
-    SHOW_TOKEN_CASE(TK_IDENT)
-    SHOW_TOKEN_CASE(TK_SCOLON)
-    SHOW_TOKEN_CASE(TK_EQ)
-    SHOW_TOKEN_CASE(TK_EQEQ)
-    SHOW_TOKEN_CASE(TK_NEQ)
-    SHOW_TOKEN_CASE(TK_COMMA)
-    SHOW_TOKEN_CASE(TK_LBRACE)
-    SHOW_TOKEN_CASE(TK_RBRACE)
-    SHOW_TOKEN_CASE(TK_RETURN)
-    SHOW_TOKEN_CASE(TK_EOF)
+      SHOW_TOKEN_CASE(TK_NUM)
+      SHOW_TOKEN_CASE(TK_LPAREN)
+      SHOW_TOKEN_CASE(TK_RPAREN)
+      SHOW_TOKEN_CASE(TK_IDENT)
+      SHOW_TOKEN_CASE(TK_SCOLON)
+      SHOW_TOKEN_CASE(TK_EQ)
+      SHOW_TOKEN_CASE(TK_EQEQ)
+      SHOW_TOKEN_CASE(TK_NEQ)
+      SHOW_TOKEN_CASE(TK_COMMA)
+      SHOW_TOKEN_CASE(TK_LBRACE)
+      SHOW_TOKEN_CASE(TK_RBRACE)
+      SHOW_TOKEN_CASE(TK_RETURN)
+      SHOW_TOKEN_CASE(TK_EOF)
     default:
       printf("%10c:\n", token->type);
       break;

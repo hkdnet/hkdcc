@@ -55,8 +55,8 @@ typedef struct Node {
   Vector *variable_names;
   union {
     Vector *statements; // for ND_FUNC_BODY
-    Vector *parameters;  // for ND_FUNC_DECL
-    Vector *functions;   // for ND_PROG
+    Vector *parameters; // for ND_FUNC_DECL
+    Vector *functions;  // for ND_PROG
   };
 } Node;
 
