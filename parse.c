@@ -109,15 +109,33 @@ Node *term(ParseState *state) {
     fprintf(stderr, "mismatch paren, begin at %d, now %d\n", beg, state->pos);
     exit(1);
   }
-  fprintf(stderr, "unexpected token at %d: %s\n", state->pos, CUR_TOKEN->input);
+  fprintf(stderr, "[term]unexpected token at %d: %s\n", state->pos, CUR_TOKEN->input);
   exit(1);
 }
 
-// mul:  term
-// mul:  term "*" mul
-// mul:  term "/" mul
+// unary: term | "+" term | "-" term
+Node *unary(ParseState *state) {
+  if (CUR_TOKEN->type == '+') {
+    INCR_POS; // skip "+"
+    Node *t = term(state);
+    return t;
+  }
+  if (CUR_TOKEN->type == '-') {
+    INCR_POS; // skip "-"
+    Node *lhs = new_node_num(0);
+    Node *rhs = term(state);
+    return new_node('-', lhs, rhs);
+  }
+
+  Node *t = term(state);
+  return t;
+}
+
+// mul: unary
+// mul: unary "*" mul
+// mul: unary "/" mul
 Node *mul(ParseState *state) {
-  Node *lhs = term(state);
+  Node *lhs = unary(state);
   if (CUR_TOKEN->type == '*') {
     INCR_POS; // skip *
     Node *rhs = mul(state);
