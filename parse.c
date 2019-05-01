@@ -216,7 +216,7 @@ Vector *variable_names(Vector *nodes);
 // func_body: stmt func_body'
 // func_body': ε | stmt func_body'
 Node *func_body(ParseState *state) {
-  Vector *expressions = new_vector();
+  Vector *statements = new_vector();
   while (1) {
     Token *token = cur_token(state);
     if (token->type == TK_RBRACE) {
@@ -224,14 +224,14 @@ Node *func_body(ParseState *state) {
     }
 
     Node *stmt = statement(state);
-    vec_push(expressions, stmt);
+    vec_push(statements, stmt);
   }
 
   Node *func_body = new_node(ND_FUNC_BODY, NULL, NULL);
 
-  Vector *names = variable_names(expressions);
+  Vector *names = variable_names(statements);
   func_body->variable_names = names;
-  func_body->expressions = expressions;
+  func_body->statements = statements;
   return func_body;
 }
 
