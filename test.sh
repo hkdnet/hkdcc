@@ -81,6 +81,10 @@ try 1 'main() { if (0) return 0; return 1; }'
 try 0 'main() { if (1) if(1) return 0; return 1; }'
 try 1 'main() { if (1) if(0) return 0; return 1; }'
 
+# while
+try 0 'main() { a = 3; while (a != 0) a = baz(a); return a; }'
+try 0 'main() { a = 1; while (a = 0) return 128; return a; }'
+
 # call
 try 1 'main() { return foo(); }'
 try 3 'main() { return bar(1, 2); }'
