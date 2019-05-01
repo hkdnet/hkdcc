@@ -77,5 +77,10 @@ my_func() { 3; }
 main() { my_func(); }
 "
 
+try 4 "
+my_func2(a) { a + 1; }
+main() { my_func2(3); }
+"
+
 echo OK
 

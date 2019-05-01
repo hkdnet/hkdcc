@@ -11,17 +11,17 @@
 
 static char *arg_registers[7] = {"", "rdi", "rsi", "rdx", "rcs", "r8", "r9"};
 
-void generate_lvalue(Node *node, Map *var_names) {
+void generate_lvalue(Node *node, Vector *var_names) {
   int idx;
-  for (idx = 0; idx < var_names->keys->len; idx++) {
-    char *s = var_names->keys->data[idx];
+  for (idx = 0; idx < var_names->len; idx++) {
+    char *s = var_names->data[idx];
     if (strcmp(s, node->name) == 0) {
       break;
     }
   }
   if (node->type == ND_IDENT) {
     printf("  mov rax, rbp\n");
-    printf("  sub rax, %d\n", idx * 8);
+    printf("  sub rax, %d\n", (idx + 1) * 8);
     printf("  push rax\n");
     return;
   }
@@ -29,7 +29,7 @@ void generate_lvalue(Node *node, Map *var_names) {
   exit(1);
 }
 
-void generate(Node *node, Map *var_names) {
+void generate(Node *node, Vector *var_names) {
   if (node->type == ND_PROG) {
     Vector *functions = node->functions;
     for (int i = 0; i < functions->len; i++) {
@@ -38,24 +38,49 @@ void generate(Node *node, Map *var_names) {
     return;
   }
   if (node->type == ND_FUNC) {
-    // Node *decl = node->lhs;
+    Node *decl = node->lhs;
     Node *body = node->rhs;
 
     // prologue
     printf("_%s:\n", node->name);
-    printf("  push rbp\n");
-    printf("  mov rbp, rsp\n");
-    printf("  sub rsp, %d\n", 8 * body->variable_names->keys->len);
-    Vector *expressions = body->expressions;
+    printf("  push rbp       # 現在のスタック位置 rbp を積む\n");
+    printf("  mov rbp, rsp   # rbp <- rsp\n");
+    printf("  sub rsp, %d     # rsp <- rsp - NUM: ローカル変数分の領域を確保\n",
+           8 * body->variable_names->len);
+    // memo: ローカル変数へのアクセスは rbp - 8*n になる
+
     int i;
+    for (i = 0; i < decl->parameters->len; i++) {
+      char *parameter_name = decl->parameters->data[i];
+      int idx;
+      for (idx = 0; idx < body->variable_names->len; idx++) {
+        char *s = body->variable_names->data[idx];
+        if (strcmp(s, parameter_name) == 0) {
+          break;
+        }
+      }
+      if (idx == body->variable_names->len) {
+        fprintf(stderr, "parameter %s is not found in local variables\n",
+                parameter_name);
+        exit(1);
+      }
+
+      printf("  mov rax, rbp   # rax <- rbp\n");
+      printf("  sub rax, %d     # rax <- rax - NUM\n", (idx + 1) * 8);
+      printf("  mov [rax], %s # [rax] <- rax\n", arg_registers[i + 1]);
+    }
+
+    Vector *expressions = body->expressions;
     for (i = 0; i < expressions->len; i++) {
+      printf("  # -- expr%d START --\n", i);
       generate(expressions->data[i], body->variable_names);
       printf("  pop rax\n");
+      printf("  # -- expr%d END --\n", i);
     }
 
     // frame epilogue
-    printf("  mov rsp, rbp\n");
-    printf("  pop rbp\n");
+    printf("  mov rsp, rbp # rsp <- rbp\n");
+    printf("  pop rbp      # pop to rbp \n");
     printf("  ret\n");
     return;
   }

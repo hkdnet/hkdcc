@@ -195,6 +195,8 @@ Node *assign(ParseState *state) {
   exit(1);
 }
 
+Vector *variable_names(Vector *nodes);
+
 // func_body: assign func_body'
 // func_body': ε | assign func_body'
 Node *func_body(ParseState *state) {
@@ -211,13 +213,13 @@ Node *func_body(ParseState *state) {
 
   Node *func_body = new_node(ND_FUNC_BODY, NULL, NULL);
 
-  Map *names = variable_names(expressions);
+  Vector *names = variable_names(expressions);
   func_body->variable_names = names;
   func_body->expressions = expressions;
   return func_body;
 }
 
-// func_decl: ident "(" ")" "{" func_body "}"
+// func_decl: ident "(" param ")" "{" func_body "}"
 Node *func_decl(ParseState *state) {
   Token *token = cur_token(state);
   if (token->type != TK_IDENT) {
@@ -232,12 +234,38 @@ Node *func_decl(ParseState *state) {
     exit(1);
   }
   state->pos++; // skip "("
-  token = cur_token(state);
-  if (token->type != TK_RPAREN) {
-    fprintf(stderr, "unexpected token at %d: expect ) but got %s\n", state->pos,
-            token->input);
-    exit(1);
+
+  Vector *parameters = new_vector();
+
+  while (1) {
+    token = cur_token(state);
+    if (token->type == TK_RPAREN) {
+      break;
+    }
+    if (token->type != TK_IDENT) {
+      fprintf(stderr, "unexpected token at %d: expect identifier but got %s\n",
+              state->pos, token->input);
+    }
+
+    vec_push(parameters, token->input);
+    state->pos++; // skip IDENT
+
+    token = cur_token(state);
+
+    if (token->type == TK_COMMA) {
+      state->pos++; // skip COMMA
+    } else if (token->type == TK_RPAREN) {
+      break;
+    } else {
+      fprintf(stderr, "unexpected token at %d: expect , or ) but got %s\n",
+              state->pos, token->input);
+      exit(1);
+    }
   }
+
+  Node *lhs = new_node(ND_FUNC_DECL, NULL, NULL);
+  lhs->parameters = parameters;
+
   state->pos++; // skip ")"
   token = cur_token(state);
   if (token->type != TK_LBRACE) {
@@ -259,6 +287,7 @@ Node *func_decl(ParseState *state) {
 
   Node *node = new_node_ident(ident);
   node->type = ND_FUNC;
+  node->lhs = lhs;
   node->rhs = rhs;
 
   return node;
@@ -523,26 +552,24 @@ void show_node(Node *node, int indent) {
     show_node(node->rhs, indent + 2);
 }
 
-void put_variable_name_on_node(Map *m, long *i, Node *node) {
+void put_variable_name_on_node(Vector *v, Node *node) {
   if (node == NULL) {
     return;
   }
-  put_variable_name_on_node(m, i, node->lhs);
-  put_variable_name_on_node(m, i, node->rhs);
+  put_variable_name_on_node(v, node->lhs);
+  put_variable_name_on_node(v, node->rhs);
   if (node->type == ND_IDENT) {
-    if (!map_get(m, node->name)) {
-      long idx = *i;
-      map_put(m, node->name, (void *)idx);
-      *i = *i + 1;
-    }
+    for (int i = v->len - 1; i >= 0; i--)
+      if (strcmp(v->data[i], node->name) == 0)
+        return;
+    vec_push(v, node->name);
   }
 }
 
-Map *variable_names(Vector *nodes) {
-  Map *m = new_map();
-  long idx = 0;
+Vector *variable_names(Vector *nodes) {
+  Vector *v = new_vector();
   for (int i = 0; i < nodes->len; i++) {
-    put_variable_name_on_node(m, &idx, nodes->data[i]);
+    put_variable_name_on_node(v, nodes->data[i]);
   }
-  return m;
+  return v;
 }
