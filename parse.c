@@ -172,23 +172,19 @@ Node *assign_tail(ParseState *state) {
   return new_node(ND_ASGN, lhs, rhs);
 }
 
-// assign : expr assign' ";"
+// assign : expr assign'
 // assign': ε | "=" expr assign'
 Node *assign(ParseState *state) {
   Node *lhs = expr(state);
   Node *rhs = assign_tail(state);
 
-  if (CUR_TOKEN->type == TK_SCOLON) { // ε
-    if (!rhs) {
-      return lhs;
-    }
-    return new_node(ND_ASGN, lhs, rhs);
+  if (!rhs) {
+    return lhs;
   }
-  fprintf(stderr, "unexpected token at %d: %s\n", state->pos, CUR_TOKEN->input);
-  exit(1);
+  return new_node(ND_ASGN, lhs, rhs);
 }
 
-// statement: "return" assign ";"
+// statement: "return" assign ";" | "if" "(" assign ")" statement
 // statement: assign ";"
 Node *statement(ParseState *state) {
   if (CUR_TOKEN->type == TK_RETURN) {
@@ -196,6 +192,25 @@ Node *statement(ParseState *state) {
     Node *asgn = assign(state);
     Node *ret = new_node(ND_RET, asgn, NULL);
     INCR_POS; // skip ";"
+    return ret;
+  }
+  if (CUR_TOKEN->type == TK_IF) {
+    INCR_POS; // skip "if"
+    if (CUR_TOKEN->type != TK_LPAREN) {
+      fprintf(stderr, "unexpected token at %d, expect ( but got %s\n",
+              state->pos, CUR_TOKEN->input);
+      exit(1);
+    }
+    INCR_POS; // skip "("
+    Node *asgn = assign(state);
+    if (CUR_TOKEN->type != TK_RPAREN) {
+      fprintf(stderr, "unexpected token at %d, expect ) but got %s\n",
+              state->pos, CUR_TOKEN->input);
+      exit(1);
+    }
+    INCR_POS; // skip ")"
+    Node *stmt = statement(state);
+    Node *ret = new_node(ND_IF, asgn, stmt);
     return ret;
   }
   Node *asgn = assign(state);
@@ -475,6 +490,14 @@ Vector *tokenize(char *p) {
         continue;
       }
 
+      if (size == 2 && strncmp(beg, "if", 2) == 0) {
+        Token *token = malloc(sizeof(Token));
+        token->type = TK_IF;
+        token->input = beg;
+        vec_push(ret, token);
+        continue;
+      }
+
       char *s = malloc(sizeof(char) * (size + 1));
       memcpy(s, beg, size);
       s[size] = '\0';
@@ -530,6 +553,7 @@ void show_tokens(Vector *tokens) {
       SHOW_TOKEN_CASE(TK_RBRACE)
       SHOW_TOKEN_CASE(TK_RETURN)
       SHOW_TOKEN_CASE(TK_EOF)
+      SHOW_TOKEN_CASE(TK_IF)
     default:
       printf("%10c:\n", token->type);
       break;

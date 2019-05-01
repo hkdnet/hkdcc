@@ -22,6 +22,7 @@ enum {
   TK_LBRACE,    // {
   TK_RBRACE,    // }
   TK_RETURN,    // "return"
+  TK_IF,        // "if"
   TK_EOF,
 };
 
@@ -44,6 +45,7 @@ enum {
   ND_FUNC_DECL,
   ND_FUNC_BODY,
   ND_RET,
+  ND_IF,
 };
 
 typedef struct Node {
