@@ -10,6 +10,7 @@
 // rdi, rsi, rdx, rcs, r8, r9: args
 
 static char *arg_registers[7] = {"", "rdi", "rsi", "rdx", "rcs", "r8", "r9"};
+static int label_count = 0;
 
 void generate_lvalue(Node *node, Vector *var_names) {
   int idx;
@@ -91,6 +92,16 @@ void generate(Node *node, Vector *var_names) {
     printf("  mov rsp, rbp\n");
     printf("  pop rbp\n");
     printf("  ret\n");
+    return;
+  }
+
+  if (node->type == ND_IF) {
+    generate(node->lhs, var_names);
+    printf("  pop rax\n");
+    printf("  cmp rax, 0\n");
+    printf("  je .Lend%03d\n", ++label_count);
+    generate(node->rhs, var_names);
+    printf(".Lend%03d:\n", label_count);
     return;
   }
 
