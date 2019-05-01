@@ -184,7 +184,7 @@ Node *assign(ParseState *state) {
   return new_node(ND_ASGN, lhs, rhs);
 }
 
-// statement: "return" assign ";" | "if" "(" assign ")" statement
+// statement: "return" assign ";" | "if" "(" assign ")" statement | "while" "(" assign ")" statement
 // statement: assign ";"
 Node *statement(ParseState *state) {
   if (CUR_TOKEN->type == TK_RETURN) {
@@ -211,6 +211,25 @@ Node *statement(ParseState *state) {
     INCR_POS; // skip ")"
     Node *stmt = statement(state);
     Node *ret = new_node(ND_IF, asgn, stmt);
+    return ret;
+  }
+  if (CUR_TOKEN->type == TK_WHILE) {
+    INCR_POS; // skip "while"
+    if (CUR_TOKEN->type != TK_LPAREN) {
+      fprintf(stderr, "unexpected token at %d, expect ( but got %s\n",
+              state->pos, CUR_TOKEN->input);
+      exit(1);
+    }
+    INCR_POS; // skip "("
+    Node *asgn = assign(state);
+    if (CUR_TOKEN->type != TK_RPAREN) {
+      fprintf(stderr, "unexpected token at %d, expect ) but got %s\n",
+              state->pos, CUR_TOKEN->input);
+      exit(1);
+    }
+    INCR_POS; // skip ")"
+    Node *stmt = statement(state);
+    Node *ret = new_node(ND_WHILE, asgn, stmt);
     return ret;
   }
   Node *asgn = assign(state);
