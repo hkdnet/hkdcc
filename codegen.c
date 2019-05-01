@@ -70,17 +70,26 @@ void generate(Node *node, Vector *var_names) {
       printf("  mov [rax], %s # [rax] <- rax\n", arg_registers[i + 1]);
     }
 
-    Vector *expressions = body->expressions;
-    for (i = 0; i < expressions->len; i++) {
-      printf("  # -- expr%d START --\n", i);
-      generate(expressions->data[i], body->variable_names);
+    Vector *statements = body->statements;
+    for (i = 0; i < statements->len; i++) {
+      printf("  # -- stmt%04d START --\n", i);
+      generate(statements->data[i], body->variable_names);
       printf("  pop rax\n");
-      printf("  # -- expr%d END --\n", i);
+      printf("  # -- stmt%04d END --\n", i);
     }
 
     // frame epilogue
     printf("  mov rsp, rbp # rsp <- rbp\n");
     printf("  pop rbp      # pop to rbp \n");
+    printf("  ret\n");
+    return;
+  }
+
+  if (node->type == ND_RET) {
+    generate(node->lhs, var_names);
+    printf("  pop rax\n");
+    printf("  mov rsp, rbp\n");
+    printf("  pop rbp\n");
     printf("  ret\n");
     return;
   }

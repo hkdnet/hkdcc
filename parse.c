@@ -13,6 +13,8 @@ typedef struct {
 Token *cur_token(ParseState *state) {
   return (Token *)state->tokens->data[state->pos];
 }
+#define CUR_TOKEN ((Token *)state->tokens->data[state->pos])
+#define INCR_POS state->pos++
 
 Node *new_node(int type, Node *lhs, Node *rhs) {
   Node *node = malloc(sizeof(Node));
@@ -185,7 +187,6 @@ Node *assign(ParseState *state) {
 
   Token *token = cur_token(state);
   if (token->type == TK_SCOLON) { // ε
-    state->pos++;                 // skip ;
     if (!rhs) {
       return lhs;
     }
@@ -195,27 +196,42 @@ Node *assign(ParseState *state) {
   exit(1);
 }
 
+// statement: "return" assign ";"
+// statement: assign ";"
+Node *statement(ParseState *state) {
+  if (CUR_TOKEN->type == TK_RETURN) {
+    INCR_POS; // skip "return"
+    Node *asgn = assign(state);
+    Node *ret = new_node(ND_RET, asgn, NULL);
+    INCR_POS; // skip ";"
+    return ret;
+  }
+  Node *asgn = assign(state);
+  INCR_POS; // skip ";"
+  return asgn;
+}
+
 Vector *variable_names(Vector *nodes);
 
-// func_body: assign func_body'
-// func_body': ε | assign func_body'
+// func_body: stmt func_body'
+// func_body': ε | stmt func_body'
 Node *func_body(ParseState *state) {
-  Vector *expressions = new_vector();
+  Vector *statements = new_vector();
   while (1) {
     Token *token = cur_token(state);
     if (token->type == TK_RBRACE) {
       break;
     }
 
-    Node *asgn = assign(state);
-    vec_push(expressions, asgn);
+    Node *stmt = statement(state);
+    vec_push(statements, stmt);
   }
 
   Node *func_body = new_node(ND_FUNC_BODY, NULL, NULL);
 
-  Vector *names = variable_names(expressions);
+  Vector *names = variable_names(statements);
   func_body->variable_names = names;
-  func_body->expressions = expressions;
+  func_body->statements = statements;
   return func_body;
 }
 
@@ -467,6 +483,15 @@ Vector *tokenize(char *p) {
         p++;
       char *end = p;
       int size = end - beg;
+
+      if (size == 6 && strncmp(beg, "return", 6) == 0) {
+        Token *token = malloc(sizeof(Token));
+        token->type = TK_RETURN;
+        token->input = beg;
+        vec_push(ret, token);
+        continue;
+      }
+
       char *s = malloc(sizeof(char) * (size + 1));
       memcpy(s, beg, size);
       s[size] = '\0';
@@ -497,34 +522,31 @@ Node *parse(Vector *tokens) {
   return prog;
 }
 
+#define SHOW_TOKEN_CASE(name)                                                  \
+  case name:                                                                   \
+    if (token->input == NULL)                                                  \
+      printf("%10s:\n", #name);                                                \
+    else                                                                       \
+      printf("%10s: %s\n", #name, token->input);                               \
+    break;
+
 void show_tokens(Vector *tokens) {
   for (int i = 0; i < tokens->len; i++) {
     Token *token = tokens->data[i];
     switch (token->type) {
-    case TK_IDENT:
-      printf("%10s: %s\n", "TK_IDENT", token->input);
-      break;
-    case TK_NUM:
-      printf("%10s: %d\n", "TK_NUM", token->value);
-      break;
-    case TK_LPAREN:
-      printf("%10s:\n", "TK_LPAREN");
-      break;
-    case TK_RPAREN:
-      printf("%10s:\n", "TK_RPAREN");
-      break;
-    case TK_EOF:
-      printf("%10s:\n", "TK_EOF");
-      break;
-    case TK_SCOLON:
-      printf("%10s:\n", "TK_SCOLON");
-      break;
-    case TK_EQ:
-      printf("%10s:\n", "TK_EQ");
-      break;
-    case TK_EQEQ:
-      printf("%10s:\n", "TK_EQEQ");
-      break;
+      SHOW_TOKEN_CASE(TK_NUM)
+      SHOW_TOKEN_CASE(TK_LPAREN)
+      SHOW_TOKEN_CASE(TK_RPAREN)
+      SHOW_TOKEN_CASE(TK_IDENT)
+      SHOW_TOKEN_CASE(TK_SCOLON)
+      SHOW_TOKEN_CASE(TK_EQ)
+      SHOW_TOKEN_CASE(TK_EQEQ)
+      SHOW_TOKEN_CASE(TK_NEQ)
+      SHOW_TOKEN_CASE(TK_COMMA)
+      SHOW_TOKEN_CASE(TK_LBRACE)
+      SHOW_TOKEN_CASE(TK_RBRACE)
+      SHOW_TOKEN_CASE(TK_RETURN)
+      SHOW_TOKEN_CASE(TK_EOF)
     default:
       printf("%10c:\n", token->type);
       break;
