@@ -13,6 +13,8 @@ typedef struct {
 Token *cur_token(ParseState *state) {
   return (Token *)state->tokens->data[state->pos];
 }
+#define CUR_TOKEN ((Token *)state->tokens->data[state->pos])
+#define INCR_POS state->pos++
 
 Node *new_node(int type, Node *lhs, Node *rhs) {
   Node *node = malloc(sizeof(Node));
