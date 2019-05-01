@@ -100,8 +100,9 @@ void generate(Node *node, Vector *var_names) {
     printf("  pop rax\n");
     printf("  cmp rax, 0\n");
     printf("  je .Lend%03d\n", ++label_count);
+    int cur_cnt = label_count;
     generate(node->rhs, var_names);
-    printf(".Lend%03d:\n", label_count);
+    printf(".Lend%03d:\n", cur_cnt);
     printf("  push rax\n");
     return;
   }
