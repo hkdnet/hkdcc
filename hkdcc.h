@@ -21,6 +21,7 @@ enum {
   TK_COMMA,     // ,
   TK_LBRACE,    // {
   TK_RBRACE,    // }
+  TK_RETURN,    // "return"
   TK_EOF,
 };
 

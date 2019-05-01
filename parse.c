@@ -467,6 +467,15 @@ Vector *tokenize(char *p) {
         p++;
       char *end = p;
       int size = end - beg;
+
+      if (size == 6 && strncmp(beg, "return", 6) == 0) {
+        Token *token = malloc(sizeof(Token));
+        token->type = TK_RETURN;
+        token->input = beg;
+        vec_push(ret, token);
+        continue;
+      }
+
       char *s = malloc(sizeof(char) * (size + 1));
       memcpy(s, beg, size);
       s[size] = '\0';
@@ -513,6 +522,12 @@ void show_tokens(Vector *tokens) {
     case TK_RPAREN:
       printf("%10s:\n", "TK_RPAREN");
       break;
+    case TK_LBRACE:
+      printf("%10s:\n", "TK_LBRACE");
+      break;
+    case TK_RBRACE:
+      printf("%10s:\n", "TK_RBRACE");
+      break;
     case TK_EOF:
       printf("%10s:\n", "TK_EOF");
       break;
@@ -524,6 +539,9 @@ void show_tokens(Vector *tokens) {
       break;
     case TK_EQEQ:
       printf("%10s:\n", "TK_EQEQ");
+      break;
+    case TK_RETURN:
+      printf("%10s:\n", "TK_RETURN");
       break;
     default:
       printf("%10c:\n", token->type);
