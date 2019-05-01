@@ -506,43 +506,27 @@ Node *parse(Vector *tokens) {
   return prog;
 }
 
+#define SHOW_TOKEN_CASE(name) case name: \
+  if (token->input == NULL) printf("%10s:\n", #name); else printf("%10s: %s\n", #name, token->input); \
+  break;
+
 void show_tokens(Vector *tokens) {
   for (int i = 0; i < tokens->len; i++) {
     Token *token = tokens->data[i];
     switch (token->type) {
-    case TK_IDENT:
-      printf("%10s: %s\n", "TK_IDENT", token->input);
-      break;
-    case TK_NUM:
-      printf("%10s: %d\n", "TK_NUM", token->value);
-      break;
-    case TK_LPAREN:
-      printf("%10s:\n", "TK_LPAREN");
-      break;
-    case TK_RPAREN:
-      printf("%10s:\n", "TK_RPAREN");
-      break;
-    case TK_LBRACE:
-      printf("%10s:\n", "TK_LBRACE");
-      break;
-    case TK_RBRACE:
-      printf("%10s:\n", "TK_RBRACE");
-      break;
-    case TK_EOF:
-      printf("%10s:\n", "TK_EOF");
-      break;
-    case TK_SCOLON:
-      printf("%10s:\n", "TK_SCOLON");
-      break;
-    case TK_EQ:
-      printf("%10s:\n", "TK_EQ");
-      break;
-    case TK_EQEQ:
-      printf("%10s:\n", "TK_EQEQ");
-      break;
-    case TK_RETURN:
-      printf("%10s:\n", "TK_RETURN");
-      break;
+    SHOW_TOKEN_CASE(TK_NUM)
+    SHOW_TOKEN_CASE(TK_LPAREN)
+    SHOW_TOKEN_CASE(TK_RPAREN)
+    SHOW_TOKEN_CASE(TK_IDENT)
+    SHOW_TOKEN_CASE(TK_SCOLON)
+    SHOW_TOKEN_CASE(TK_EQ)
+    SHOW_TOKEN_CASE(TK_EQEQ)
+    SHOW_TOKEN_CASE(TK_NEQ)
+    SHOW_TOKEN_CASE(TK_COMMA)
+    SHOW_TOKEN_CASE(TK_LBRACE)
+    SHOW_TOKEN_CASE(TK_RBRACE)
+    SHOW_TOKEN_CASE(TK_RETURN)
+    SHOW_TOKEN_CASE(TK_EOF)
     default:
       printf("%10c:\n", token->type);
       break;
