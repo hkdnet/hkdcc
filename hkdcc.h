@@ -22,6 +22,7 @@ enum {
   TK_LBRACE,    // {
   TK_RBRACE,    // }
   TK_RETURN,    // "return"
+  TK_IF,        // "if"
   TK_EOF,
 };
 
