@@ -23,8 +23,8 @@ try 0 'main() { return 0; }'
 try 42 'main() { return 42; }'
 
 # unary operator
-try +1 'main() { return +1; }'
-try -1 'main() { return -1; }'
+try 1 'main() { return +1; }'
+try 255 'main() { return -1; }'
 
 # add
 try 3 'main() { return 1+2; }'
