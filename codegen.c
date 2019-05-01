@@ -85,6 +85,15 @@ void generate(Node *node, Vector *var_names) {
     return;
   }
 
+  if (node->type == ND_RET) {
+    generate(node->lhs, var_names);
+    printf("  pop rax\n");
+    printf("  mov rsp, rbp\n");
+    printf("  pop rbp\n");
+    printf("  ret\n");
+    return;
+  }
+
   if (node->type == ND_NUM) {
     printf("  push %d\n", node->value);
     return;
