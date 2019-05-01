@@ -184,8 +184,10 @@ Node *assign(ParseState *state) {
   return new_node(ND_ASGN, lhs, rhs);
 }
 
-// statement: "return" assign ";" | "if" "(" assign ")" statement | "while" "(" assign ")" statement
-// statement: assign ";"
+// statement: "return" assign ";"
+//          | "if" "(" assign ")" statement
+//          | "while" "(" assign ")" statement
+//          | assign ";"
 Node *statement(ParseState *state) {
   if (CUR_TOKEN->type == TK_RETURN) {
     INCR_POS; // skip "return"
