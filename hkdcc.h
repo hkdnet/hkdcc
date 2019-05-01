@@ -23,6 +23,7 @@ enum {
   TK_RBRACE,    // }
   TK_RETURN,    // "return"
   TK_IF,        // "if"
+  TK_WHILE,     // "while"
   TK_EOF,
 };
 

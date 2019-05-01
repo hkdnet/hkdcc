@@ -498,6 +498,14 @@ Vector *tokenize(char *p) {
         continue;
       }
 
+      if (size == 5 && strncmp(beg, "while", 5) == 0) {
+        Token *token = malloc(sizeof(Token));
+        token->type = TK_WHILE;
+        token->input = beg;
+        vec_push(ret, token);
+        continue;
+      }
+
       char *s = malloc(sizeof(char) * (size + 1));
       memcpy(s, beg, size);
       s[size] = '\0';
