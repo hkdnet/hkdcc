@@ -127,7 +127,7 @@ void generate(Node *node, Vector *var_names) {
         printf("  pop %s\n", arg_registers[i]);
       }
     }
-    printf("  call _%s\n", node->name); // TODO: always with underscore ?
+    printf("  call _%s\n", node->name); // always with underscore
     printf("  push rax\n");
     return;
   }
