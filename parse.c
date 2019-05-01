@@ -46,22 +46,20 @@ Node *expr();
 
 // arguments: ε | expr "," arguments
 Node *arguments(ParseState *state, int *argc) {
-  Token *token = cur_token(state);
-  if (token->type == TK_RPAREN) { // ()
+  if (CUR_TOKEN->type == TK_RPAREN) { // ()
     return NULL;
   }
   Node *lhs = expr(state);
   *argc = *argc + 1;
-  token = cur_token(state);
 
-  if (token->type == TK_RPAREN) {
+  if (CUR_TOKEN->type == TK_RPAREN) {
     return new_node(ND_ARGS, lhs, NULL);
   }
-  if (token->type != TK_COMMA) {
+  if (CUR_TOKEN->type != TK_COMMA) {
     fprintf(stderr, "missing comma after an argument at %d\n", state->pos);
     exit(1);
   }
-  state->pos++; // skip ","
+  INCR_POS; // skip ","
   Node *rhs = arguments(state, argc);
   return new_node(ND_ARGS, lhs, rhs);
 }
@@ -70,50 +68,48 @@ Node *arguments(ParseState *state, int *argc) {
 // term: "(" expr ")"
 Node *term(ParseState *state) {
   int beg = state->pos;
-  Token *token = cur_token(state);
-  if (token->type == TK_NUM) {
-    Node *ret = new_node_num(token->value);
-    state->pos++;
+  if (CUR_TOKEN->type == TK_NUM) {
+    Node *ret = new_node_num(CUR_TOKEN->value);
+    INCR_POS;
     return ret;
   }
-  if (token->type == TK_IDENT) {
-    state->pos++;
-    Token *next = cur_token(state);
-    if (next->type != TK_LPAREN) {
-      Node *ret = new_node_ident(token->input);
+  if (CUR_TOKEN->type == TK_IDENT) {
+    char *name = CUR_TOKEN->input;
+    INCR_POS;
+    if (CUR_TOKEN->type != TK_LPAREN) {
+      Node *ret = new_node_ident(name);
       return ret;
     }
     int beg = state->pos;
-    state->pos++; // skip "("
+    INCR_POS; // skip "("
 
     int argc = 0;
     Node *args = arguments(state, &argc);
 
-    if (cur_token(state)->type == TK_RPAREN) {
+    if (CUR_TOKEN->type == TK_RPAREN) {
       // function call
-      Node *ret = new_node_ident(token->input); // TODO: fix this abuse
+      Node *ret = new_node_ident(name); // TODO: fix this abuse
       ret->type = ND_CALL;
       ret->lhs = args;
       ret->value = argc;
-      state->pos++; // skip ")"
+      INCR_POS; // skip ")"
       return ret;
     }
     fprintf(stderr, "mismatch paren for function call, begin at %d, now %d\n",
             beg, state->pos);
     exit(1);
   }
-  if (token->type == TK_LPAREN) {
-    state->pos++; // skip (
+  if (CUR_TOKEN->type == TK_LPAREN) {
+    INCR_POS; // skip (
     Node *ret = expr(state);
-    token = cur_token(state);
-    if (token->type == TK_RPAREN) {
-      state->pos++; // skip )
+    if (CUR_TOKEN->type == TK_RPAREN) {
+      INCR_POS; // skip )
       return ret;
     }
     fprintf(stderr, "mismatch paren, begin at %d, now %d\n", beg, state->pos);
     exit(1);
   }
-  fprintf(stderr, "unexpected token at %d: %s\n", state->pos, token->input);
+  fprintf(stderr, "unexpected token at %d: %s\n", state->pos, CUR_TOKEN->input);
   exit(1);
 }
 
@@ -122,14 +118,13 @@ Node *term(ParseState *state) {
 // mul:  term "/" mul
 Node *mul(ParseState *state) {
   Node *lhs = term(state);
-  Token *token = cur_token(state);
-  if (token->type == '*') {
-    state->pos++; // skip *
+  if (CUR_TOKEN->type == '*') {
+    INCR_POS; // skip *
     Node *rhs = mul(state);
     return new_node('*', lhs, rhs);
   }
-  if (token->type == '/') {
-    state->pos++; // skip /
+  if (CUR_TOKEN->type == '/') {
+    INCR_POS; // skip /
     Node *rhs = mul(state);
     return new_node('/', lhs, rhs);
   }
@@ -140,24 +135,23 @@ Node *mul(ParseState *state) {
 // expr': ε | "+" expr | "-" expr | "==" expr | "!=" expr
 Node *expr(ParseState *state) {
   Node *lhs = mul(state);
-  Token *token = cur_token(state);
-  if (token->type == '+') {
-    state->pos++; // skip +
+  if (CUR_TOKEN->type == '+') {
+    INCR_POS; // skip +
     Node *rhs = expr(state);
     return new_node('+', lhs, rhs);
   }
-  if (token->type == '-') {
-    state->pos++; // skip -
+  if (CUR_TOKEN->type == '-') {
+    INCR_POS; // skip -
     Node *rhs = expr(state);
     return new_node('-', lhs, rhs);
   }
-  if (token->type == TK_EQEQ) {
-    state->pos++; // skip TK_EQEQ
+  if (CUR_TOKEN->type == TK_EQEQ) {
+    INCR_POS; // skip TK_EQEQ
     Node *rhs = expr(state);
     return new_node(ND_EQEQ, lhs, rhs);
   }
-  if (token->type == TK_NEQ) {
-    state->pos++; // skip TK_NEQ
+  if (CUR_TOKEN->type == TK_NEQ) {
+    INCR_POS; // skip TK_NEQ
     Node *rhs = expr(state);
     return new_node(ND_NEQ, lhs, rhs);
   }
@@ -166,11 +160,10 @@ Node *expr(ParseState *state) {
 
 // assign': ε | "=" expr assign'
 Node *assign_tail(ParseState *state) {
-  Token *token = cur_token(state);
-  if (token->type != TK_EQ) { // ε
+  if (CUR_TOKEN->type != TK_EQ) { // ε
     return NULL;
   }
-  state->pos++; // skip "="
+  INCR_POS; // skip "="
   Node *lhs = expr(state);
   Node *rhs = assign_tail(state);
   if (!rhs) {
@@ -185,14 +178,13 @@ Node *assign(ParseState *state) {
   Node *lhs = expr(state);
   Node *rhs = assign_tail(state);
 
-  Token *token = cur_token(state);
-  if (token->type == TK_SCOLON) { // ε
+  if (CUR_TOKEN->type == TK_SCOLON) { // ε
     if (!rhs) {
       return lhs;
     }
     return new_node(ND_ASGN, lhs, rhs);
   }
-  fprintf(stderr, "unexpected token at %d: %s\n", state->pos, token->input);
+  fprintf(stderr, "unexpected token at %d: %s\n", state->pos, CUR_TOKEN->input);
   exit(1);
 }
 
@@ -218,8 +210,7 @@ Vector *variable_names(Vector *nodes);
 Node *func_body(ParseState *state) {
   Vector *statements = new_vector();
   while (1) {
-    Token *token = cur_token(state);
-    if (token->type == TK_RBRACE) {
+    if (CUR_TOKEN->type == TK_RBRACE) {
       break;
     }
 
@@ -237,44 +228,39 @@ Node *func_body(ParseState *state) {
 
 // func_decl: ident "(" param ")" "{" func_body "}"
 Node *func_decl(ParseState *state) {
-  Token *token = cur_token(state);
-  if (token->type != TK_IDENT) {
+  if (CUR_TOKEN->type != TK_IDENT) {
     return NULL;
   }
-  char *ident = token->input;
-  state->pos++; // skip ident
-  token = cur_token(state);
-  if (token->type != TK_LPAREN) {
+  char *ident = CUR_TOKEN->input;
+  INCR_POS; // skip ident
+  if (CUR_TOKEN->type != TK_LPAREN) {
     fprintf(stderr, "unexpected token at %d: expect ( but got %s\n", state->pos,
-            token->input);
+            CUR_TOKEN->input);
     exit(1);
   }
-  state->pos++; // skip "("
+  INCR_POS; // skip "("
 
   Vector *parameters = new_vector();
 
   while (1) {
-    token = cur_token(state);
-    if (token->type == TK_RPAREN) {
+    if (CUR_TOKEN->type == TK_RPAREN) {
       break;
     }
-    if (token->type != TK_IDENT) {
+    if (CUR_TOKEN->type != TK_IDENT) {
       fprintf(stderr, "unexpected token at %d: expect identifier but got %s\n",
-              state->pos, token->input);
+              state->pos, CUR_TOKEN->input);
     }
 
-    vec_push(parameters, token->input);
-    state->pos++; // skip IDENT
+    vec_push(parameters, CUR_TOKEN->input);
+    INCR_POS; // skip IDENT
 
-    token = cur_token(state);
-
-    if (token->type == TK_COMMA) {
-      state->pos++; // skip COMMA
-    } else if (token->type == TK_RPAREN) {
+    if (CUR_TOKEN->type == TK_COMMA) {
+      INCR_POS; // skip COMMA
+    } else if (CUR_TOKEN->type == TK_RPAREN) {
       break;
     } else {
       fprintf(stderr, "unexpected token at %d: expect , or ) but got %s\n",
-              state->pos, token->input);
+              state->pos, CUR_TOKEN->input);
       exit(1);
     }
   }
@@ -282,24 +268,22 @@ Node *func_decl(ParseState *state) {
   Node *lhs = new_node(ND_FUNC_DECL, NULL, NULL);
   lhs->parameters = parameters;
 
-  state->pos++; // skip ")"
-  token = cur_token(state);
-  if (token->type != TK_LBRACE) {
+  INCR_POS; // skip ")"
+  if (CUR_TOKEN->type != TK_LBRACE) {
     fprintf(stderr, "unexpected token at %d: expect { but got %s\n", state->pos,
-            token->input);
+            CUR_TOKEN->input);
     exit(1);
   }
-  state->pos++; // skip "{"
+  INCR_POS; // skip "{"
 
   Node *rhs = func_body(state);
 
-  token = cur_token(state);
-  if (token->type != TK_RBRACE) {
+  if (CUR_TOKEN->type != TK_RBRACE) {
     fprintf(stderr, "unexpected token at %d: expect } but got %s\n", state->pos,
-            token->input);
+            CUR_TOKEN->input);
     exit(1);
   }
-  state->pos++; // skip "}"
+  INCR_POS; // skip "}"
 
   Node *node = new_node_ident(ident);
   node->type = ND_FUNC;
@@ -314,8 +298,7 @@ Node *func_decl(ParseState *state) {
 Node *program(ParseState *state) {
   Vector *functions = new_vector();
   while (1) {
-    Token *token = cur_token(state);
-    if (token->type == TK_EOF) {
+    if (CUR_TOKEN->type == TK_EOF) {
       break;
     }
     Node *func = func_decl(state);
