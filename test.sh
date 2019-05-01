@@ -70,6 +70,12 @@ try 1 'main() { return 2 != 1; }'
 # if
 try 1 'main() { if (1==1) return 1; return 0; }'
 try 0 'main() { if (1==0) return 1; return 0; }'
+try 0 'main() { if (1!=1) return 1; return 0; }'
+try 1 'main() { if (1!=0) return 1; return 0; }'
+try 1 'main() { if (a=1) return 1; return 0; }'
+try 0 'main() { if (a=0) return 1; return 0; }'
+try 1 'main() { if (a=1) return a; return 2; }'
+try 0 'main() { if (a=0) return 2; return a; }'
 
 # call
 try 1 'main() { return foo(); }'
