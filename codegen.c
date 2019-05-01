@@ -96,13 +96,28 @@ void generate(Node *node, Vector *var_names) {
   }
 
   if (node->type == ND_IF) {
+    int cur_cnt = ++label_count;
     generate(node->lhs, var_names);
     printf("  pop rax\n");
     printf("  cmp rax, 0\n");
-    printf("  je .Lend%03d\n", ++label_count);
-    int cur_cnt = label_count;
+    printf("  je .Lend%03d\n", cur_cnt);
     generate(node->rhs, var_names);
     printf(".Lend%03d:\n", cur_cnt);
+    printf("  push rax\n");
+    return;
+  }
+
+  if (node->type == ND_WHILE) {
+    int beg_count = ++label_count;
+    int end_count = ++label_count;
+    printf(".Lbegin%03d:\n", beg_count);
+    generate(node->lhs, var_names);
+    printf("  pop rax\n");
+    printf("  cmp rax, 0\n");
+    printf("  je .Lend%03d\n", end_count);
+    generate(node->rhs, var_names);
+    printf("  jmp .Lbegin%03d\n", beg_count);
+    printf(".Lend%03d:\n", end_count);
     printf("  push rax\n");
     return;
   }
