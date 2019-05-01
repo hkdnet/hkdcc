@@ -79,6 +79,7 @@ try 0 'main() { if (a=0) return 2; return a; }'
 try 0 'main() { if (1) return 0; return 1; }'
 try 1 'main() { if (0) return 0; return 1; }'
 try 0 'main() { if (1) if(1) return 0; return 1; }'
+try 1 'main() { if (1) if(0) return 0; return 1; }'
 
 # call
 try 1 'main() { return foo(); }'
