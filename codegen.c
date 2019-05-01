@@ -21,7 +21,7 @@ void generate_lvalue(Node *node, Vector *var_names) {
   }
   if (node->type == ND_IDENT) {
     printf("  mov rax, rbp\n");
-    printf("  sub rax, %d\n", idx * 8);
+    printf("  sub rax, %d\n", (idx + 1) * 8);
     printf("  push rax\n");
     return;
   }
@@ -67,9 +67,7 @@ void generate(Node *node, Vector *var_names) {
 
       printf("  mov rax, rbp   # rax <- rbp\n");
       printf("  sub rax, %d     # rax <- rax - NUM\n", (idx + 1) * 8);
-      printf("  push %s       # push argument value\n", arg_registers[i + 1]);
-      printf("  pop rdi        # pop to rdi\n");
-      printf("  mov [rax], rdi # [rax] <- rdi\n");
+      printf("  mov [rax], %s # [rax] <- rax\n", arg_registers[i + 1]);
     }
 
     Vector *expressions = body->expressions;
