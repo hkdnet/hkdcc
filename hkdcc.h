@@ -45,6 +45,7 @@ enum {
   ND_FUNC_DECL,
   ND_FUNC_BODY,
   ND_RET,
+  ND_IF,
 };
 
 typedef struct Node {
