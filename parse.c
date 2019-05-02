@@ -109,7 +109,8 @@ Node *term(ParseState *state) {
     fprintf(stderr, "mismatch paren, begin at %d, now %d\n", beg, state->pos);
     exit(1);
   }
-  fprintf(stderr, "[term]unexpected token at %d: %s\n", state->pos, CUR_TOKEN->input);
+  fprintf(stderr, "[term]unexpected token at %d: %s\n", state->pos,
+          CUR_TOKEN->input);
   exit(1);
 }
 
@@ -149,30 +150,88 @@ Node *mul(ParseState *state) {
   return lhs;
 }
 
-// expr:  mul expr'
-// expr': ε | "+" expr | "-" expr | "==" expr | "!=" expr
-Node *expr(ParseState *state) {
+// add: mul | mul "+" add | mul "-" add
+Node *add(ParseState *state) {
   Node *lhs = mul(state);
   if (CUR_TOKEN->type == '+') {
     INCR_POS; // skip +
-    Node *rhs = expr(state);
+    Node *rhs = add(state);
     return new_node('+', lhs, rhs);
   }
   if (CUR_TOKEN->type == '-') {
     INCR_POS; // skip -
-    Node *rhs = expr(state);
+    Node *rhs = add(state);
     return new_node('-', lhs, rhs);
   }
+  return lhs;
+}
+// relational: add
+//           | add "<" add
+//           | add "<=" add
+//           | add ">" add
+//           | add ">=" add
+Node *relational(ParseState *state) {
+  Node *lhs = add(state);
+  if (CUR_TOKEN->type == TK_LT) {
+    INCR_POS; // skip "<"
+    Node *rhs = add(state);
+    return new_node(ND_LT, lhs, rhs);
+  }
+  if (CUR_TOKEN->type == TK_LTEQ) {
+    INCR_POS; // skip "<="
+    Node *rhs = relational(state);
+    return new_node(ND_LTEQ, lhs, rhs);
+  }
+  if (CUR_TOKEN->type == TK_GT) {
+    INCR_POS; // skip ">"
+    Node *rhs = add(state);
+    return new_node(ND_LT, rhs, lhs); // swapped
+  }
+  if (CUR_TOKEN->type == TK_GTEQ) {
+    INCR_POS; // skip "="
+    Node *rhs = relational(state);
+    return new_node(ND_LTEQ, rhs, lhs); // swapped
+  }
+  return lhs;
+}
+// equality': relational
+//          | relational "==" relational
+//          | relational "!=" relational
+Node *equality_tail(ParseState *state) {
+  Node *lhs = relational(state);
   if (CUR_TOKEN->type == TK_EQEQ) {
-    INCR_POS; // skip TK_EQEQ
-    Node *rhs = expr(state);
+    INCR_POS; // skip "=="
+    Node *rhs = relational(state);
     return new_node(ND_EQEQ, lhs, rhs);
   }
   if (CUR_TOKEN->type == TK_NEQ) {
-    INCR_POS; // skip TK_NEQ
-    Node *rhs = expr(state);
+    INCR_POS; // skip "!="
+    Node *rhs = relational(state);
     return new_node(ND_NEQ, lhs, rhs);
   }
+  return lhs;
+}
+// equality: equality'
+//         | equality' "==" relational
+//         | equality' "!=" relational
+Node *equality(ParseState *state) {
+  Node *lhs = equality_tail(state);
+  if (CUR_TOKEN->type == TK_EQEQ) {
+    INCR_POS; // skip "=="
+    Node *rhs = relational(state);
+    return new_node(ND_EQEQ, lhs, rhs);
+  }
+  if (CUR_TOKEN->type == TK_NEQ) {
+    INCR_POS; // skip "!="
+    Node *rhs = relational(state);
+    return new_node(ND_NEQ, lhs, rhs);
+  }
+  return lhs;
+}
+
+// expr: equality
+Node *expr(ParseState *state) {
+  Node *lhs = equality(state);
   return lhs;
 }
 
@@ -416,7 +475,7 @@ char *tokenize_lt(char *p, Vector *tokens) {
     fprintf(stderr, "assert error: tokenize_lt should be called with <\n");
     exit(1);
   }
-  char* beg = p;
+  char *beg = p;
   p++; // skip "<"
 
   if (*p == '=') { // <=
@@ -439,7 +498,7 @@ char *tokenize_gt(char *p, Vector *tokens) {
     fprintf(stderr, "assert error: tokenize_lt should be called with >\n");
     exit(1);
   }
-  char* beg = p;
+  char *beg = p;
   p++; // skip ">"
 
   if (*p == '=') { // >=

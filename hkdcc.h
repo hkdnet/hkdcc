@@ -19,7 +19,7 @@ enum {
   TK_EQEQ,      // ==
   TK_NEQ,       // !=
   TK_LTEQ,      // <=
-  TK_LT,        // <=
+  TK_LT,        // <
   TK_GTEQ,      // >=
   TK_GT,        // >
   TK_COMMA,     // ,
@@ -44,6 +44,8 @@ enum {
   ND_ASGN,
   ND_EQEQ,
   ND_NEQ,
+  ND_LTEQ,
+  ND_LT,
   ND_CALL,
   ND_ARGS,
   ND_FUNC,
