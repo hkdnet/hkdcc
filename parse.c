@@ -264,6 +264,7 @@ Node *assign(ParseState *state) {
 // statement: "return" assign ";"
 //          | "if" "(" assign ")" statement
 //          | "while" "(" assign ")" statement
+//          | "int" ident ";"
 //          | assign ";"
 Node *statement(ParseState *state) {
   if (CUR_TOKEN->type == TK_RETURN) {
@@ -309,6 +310,25 @@ Node *statement(ParseState *state) {
     INCR_POS; // skip ")"
     Node *stmt = statement(state);
     Node *ret = new_node(ND_WHILE, asgn, stmt);
+    return ret;
+  }
+  if (CUR_TOKEN->type == TK_IDENT && (strcmp(CUR_TOKEN->input, "int") == 0)) {
+    INCR_POS; // skip "int"
+    if (CUR_TOKEN->type != TK_IDENT) {
+      fprintf(stderr, "unexpected token at %d, expect IDENTIFIER but got %s\n",
+              state->pos, CUR_TOKEN->input);
+      exit(1);
+    }
+    Node *ret = new_node(ND_VAR_DECL, NULL, NULL);
+    ret->name = CUR_TOKEN->input;
+    INCR_POS; // skip ident
+    // TODO: support `int a, b;` and `int a = 1;`
+    if (CUR_TOKEN->type != TK_SCOLON) {
+      fprintf(stderr, "unexpected token at %d, expect ; but got %s\n",
+              state->pos, CUR_TOKEN->input);
+      exit(1);
+    }
+    INCR_POS; // skip ";"
     return ret;
   }
   Node *asgn = assign(state);
