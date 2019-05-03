@@ -727,18 +727,57 @@ void show_tokens(Vector *tokens) {
   }
 }
 
+#define SHOW_NODE_CASE(name)                                                   \
+  case name:                                                                   \
+    printf("%10s:\n", #name);                                                  \
+    break;
+
 void show_node(Node *node, int indent) {
   for (int i = 0; i < indent; i++)
     printf(" ");
 
   switch (node->type) {
   case ND_NUM:
-    printf("ND_NUM: %d\n", node->value);
+    printf("%10s: %d\n", "ND_NUM", node->value);
     return;
-  case ND_ASGN:
-    printf("ND_ASGN:\n");
+  case ND_IDENT:
+    printf("%10s: %s\n", "ND_IDENT", node->name);
+    return;
+  case ND_PROG:
+    printf("%10s:\n", "ND_PROG");
+    for (int i = 0; i < node->functions->len; i++) {
+      Node *tmp = node->functions->data[i];
+      show_node(tmp, indent + 2);
+    }
+    return;
+  case ND_FUNC:
+    printf("%10s: %s\n", "ND_FUNC", node->name);
+    break;
+  case ND_FUNC_DECL:
+    printf("%10s:\n", "ND_FUNC_DECL");
+    for (int i = 0; i < node->parameters->len; i++) {
+      Node *tmp = node->parameters->data[i];
+      show_node(tmp, indent + 2);
+    }
+    return;
+  case ND_FUNC_BODY:
+    printf("%10s:\n", "ND_FUNC_BODY");
+    for (int i = 0; i < node->statements->len; i++) {
+      Node *tmp = node->statements->data[i];
+      show_node(tmp, indent + 2);
+    }
+    return;
+    SHOW_NODE_CASE(ND_ASGN);
+    SHOW_NODE_CASE(ND_EQEQ);
+    SHOW_NODE_CASE(ND_NEQ);
+    SHOW_NODE_CASE(ND_LTEQ);
+    SHOW_NODE_CASE(ND_LT);
+    SHOW_NODE_CASE(ND_CALL);
+    SHOW_NODE_CASE(ND_RET);
+    SHOW_NODE_CASE(ND_IF);
+    SHOW_NODE_CASE(ND_WHILE);
   default:
-    printf("%c\n", node->type);
+    printf("%10c:\n", node->type);
   }
 
   if (node->lhs)
