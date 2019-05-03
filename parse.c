@@ -354,6 +354,7 @@ Node *func_body(ParseState *state) {
   Node *func_body = new_node(ND_FUNC_BODY, NULL, NULL);
 
   Vector *names = variable_names(statements);
+  // TODO: check if undeclared identifier exists
   func_body->variable_names = names;
   func_body->statements = statements;
   return func_body;
@@ -819,10 +820,13 @@ void put_variable_name_on_node(Vector *v, Node *node) {
   }
   put_variable_name_on_node(v, node->lhs);
   put_variable_name_on_node(v, node->rhs);
-  if (node->type == ND_IDENT) {
+  if (node->type == ND_VAR_DECL) {
     for (int i = v->len - 1; i >= 0; i--)
-      if (strcmp(v->data[i], node->name) == 0)
-        return;
+      if (strcmp(v->data[i], node->name) == 0) {
+        // already declared
+        fprintf(stderr, "duplicate declaration of %s\n", node->name);
+        exit(1);
+      }
     vec_push(v, node->name);
   }
 }
