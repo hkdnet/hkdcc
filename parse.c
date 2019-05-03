@@ -339,11 +339,18 @@ Node *func_body(ParseState *state) {
   return func_body;
 }
 
-// func_decl: ident "(" param ")" "{" func_body "}"
+// func_decl: "int" ident "(" param ")" "{" func_body "}"
 Node *func_decl(ParseState *state) {
   if (CUR_TOKEN->type != TK_IDENT) {
     return NULL;
   }
+
+  if ((strcmp(CUR_TOKEN->input, "int")) != 0) {
+    return NULL;
+  }
+
+  INCR_POS; // skip "int"
+
   char *ident = CUR_TOKEN->input;
   INCR_POS; // skip ident
   if (CUR_TOKEN->type != TK_LPAREN) {
