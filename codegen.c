@@ -166,13 +166,27 @@ void generate(Node *node, Vector *var_names) {
     return;
   }
 
-  if (node->type == ND_EQEQ || node->type == ND_NEQ) {
+  if (node->type == ND_EQEQ || node->type == ND_NEQ || node->type == ND_LTEQ ||
+      node->type == ND_LT) {
     generate(node->lhs, var_names);
     generate(node->rhs, var_names);
     printf("  pop rax\n");
     printf("  pop rdi\n");
     printf("  cmp rdi, rax\n");
-    printf("  %s al\n", node->type == ND_EQEQ ? "sete" : "setne");
+    switch (node->type) {
+    case ND_EQEQ:
+      printf("  sete al\n");
+      break;
+    case ND_NEQ:
+      printf("  setne al\n");
+      break;
+    case ND_LTEQ:
+      printf("  setle al\n");
+      break;
+    case ND_LT:
+      printf("  setl al\n");
+      break;
+    }
     printf("  movzx rax, al\n");
     printf("  push rax\n");
     return;

@@ -21,6 +21,9 @@ int main(int argc, char **argv) {
 
   Node *main = parse(tokens);
 
+  // for debug
+  // show_node(main, 0);
+
   printf(".intel_syntax noprefix\n");
   printf(".global _main\n");
 

@@ -109,7 +109,8 @@ Node *term(ParseState *state) {
     fprintf(stderr, "mismatch paren, begin at %d, now %d\n", beg, state->pos);
     exit(1);
   }
-  fprintf(stderr, "[term]unexpected token at %d: %s\n", state->pos, CUR_TOKEN->input);
+  fprintf(stderr, "[term]unexpected token at %d: %s\n", state->pos,
+          CUR_TOKEN->input);
   exit(1);
 }
 
@@ -149,30 +150,88 @@ Node *mul(ParseState *state) {
   return lhs;
 }
 
-// expr:  mul expr'
-// expr': ε | "+" expr | "-" expr | "==" expr | "!=" expr
-Node *expr(ParseState *state) {
+// add: mul | mul "+" add | mul "-" add
+Node *add(ParseState *state) {
   Node *lhs = mul(state);
   if (CUR_TOKEN->type == '+') {
     INCR_POS; // skip +
-    Node *rhs = expr(state);
+    Node *rhs = add(state);
     return new_node('+', lhs, rhs);
   }
   if (CUR_TOKEN->type == '-') {
     INCR_POS; // skip -
-    Node *rhs = expr(state);
+    Node *rhs = add(state);
     return new_node('-', lhs, rhs);
   }
+  return lhs;
+}
+// relational: add
+//           | add "<" add
+//           | add "<=" add
+//           | add ">" add
+//           | add ">=" add
+Node *relational(ParseState *state) {
+  Node *lhs = add(state);
+  if (CUR_TOKEN->type == TK_LT) {
+    INCR_POS; // skip "<"
+    Node *rhs = add(state);
+    return new_node(ND_LT, lhs, rhs);
+  }
+  if (CUR_TOKEN->type == TK_LTEQ) {
+    INCR_POS; // skip "<="
+    Node *rhs = relational(state);
+    return new_node(ND_LTEQ, lhs, rhs);
+  }
+  if (CUR_TOKEN->type == TK_GT) {
+    INCR_POS; // skip ">"
+    Node *rhs = add(state);
+    return new_node(ND_LT, rhs, lhs); // swapped
+  }
+  if (CUR_TOKEN->type == TK_GTEQ) {
+    INCR_POS; // skip "="
+    Node *rhs = relational(state);
+    return new_node(ND_LTEQ, rhs, lhs); // swapped
+  }
+  return lhs;
+}
+// equality': relational
+//          | relational "==" relational
+//          | relational "!=" relational
+Node *equality_tail(ParseState *state) {
+  Node *lhs = relational(state);
   if (CUR_TOKEN->type == TK_EQEQ) {
-    INCR_POS; // skip TK_EQEQ
-    Node *rhs = expr(state);
+    INCR_POS; // skip "=="
+    Node *rhs = relational(state);
     return new_node(ND_EQEQ, lhs, rhs);
   }
   if (CUR_TOKEN->type == TK_NEQ) {
-    INCR_POS; // skip TK_NEQ
-    Node *rhs = expr(state);
+    INCR_POS; // skip "!="
+    Node *rhs = relational(state);
     return new_node(ND_NEQ, lhs, rhs);
   }
+  return lhs;
+}
+// equality: equality'
+//         | equality' "==" relational
+//         | equality' "!=" relational
+Node *equality(ParseState *state) {
+  Node *lhs = equality_tail(state);
+  if (CUR_TOKEN->type == TK_EQEQ) {
+    INCR_POS; // skip "=="
+    Node *rhs = relational(state);
+    return new_node(ND_EQEQ, lhs, rhs);
+  }
+  if (CUR_TOKEN->type == TK_NEQ) {
+    INCR_POS; // skip "!="
+    Node *rhs = relational(state);
+    return new_node(ND_NEQ, lhs, rhs);
+  }
+  return lhs;
+}
+
+// expr: equality
+Node *expr(ParseState *state) {
+  Node *lhs = equality(state);
   return lhs;
 }
 
@@ -411,6 +470,52 @@ char *tokenize_bang(char *p, Vector *tokens) {
   exit(1);
 }
 
+char *tokenize_lt(char *p, Vector *tokens) {
+  if (*p != '<') {
+    fprintf(stderr, "assert error: tokenize_lt should be called with <\n");
+    exit(1);
+  }
+  char *beg = p;
+  p++; // skip "<"
+
+  if (*p == '=') { // <=
+    Token *token = malloc(sizeof(Token));
+    token->type = TK_LTEQ;
+    token->input = beg;
+    p++; // skip =
+    vec_push(tokens, token);
+    return p;
+  }
+
+  Token *token = malloc(sizeof(Token));
+  token->type = TK_LT;
+  token->input = beg;
+  return p;
+}
+
+char *tokenize_gt(char *p, Vector *tokens) {
+  if (*p != '>') {
+    fprintf(stderr, "assert error: tokenize_lt should be called with >\n");
+    exit(1);
+  }
+  char *beg = p;
+  p++; // skip ">"
+
+  if (*p == '=') { // >=
+    Token *token = malloc(sizeof(Token));
+    token->type = TK_GTEQ;
+    token->input = beg;
+    p++; // skip =
+    vec_push(tokens, token);
+    return p;
+  }
+
+  Token *token = malloc(sizeof(Token));
+  token->type = TK_GT;
+  token->input = beg;
+  return p;
+}
+
 int is_identifier_head(char c) {
   return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || c == '_';
 }
@@ -429,6 +534,16 @@ Vector *tokenize(char *p) {
 
     if (*p == '!') {
       p = tokenize_bang(p, ret);
+      continue;
+    }
+
+    if (*p == '<') {
+      p = tokenize_lt(p, ret);
+      continue;
+    }
+
+    if (*p == '>') {
+      p = tokenize_gt(p, ret);
       continue;
     }
 
@@ -595,6 +710,10 @@ void show_tokens(Vector *tokens) {
       SHOW_TOKEN_CASE(TK_EQ)
       SHOW_TOKEN_CASE(TK_EQEQ)
       SHOW_TOKEN_CASE(TK_NEQ)
+      SHOW_TOKEN_CASE(TK_LTEQ)
+      SHOW_TOKEN_CASE(TK_LT)
+      SHOW_TOKEN_CASE(TK_GTEQ)
+      SHOW_TOKEN_CASE(TK_GT)
       SHOW_TOKEN_CASE(TK_COMMA)
       SHOW_TOKEN_CASE(TK_LBRACE)
       SHOW_TOKEN_CASE(TK_RBRACE)
@@ -608,18 +727,57 @@ void show_tokens(Vector *tokens) {
   }
 }
 
+#define SHOW_NODE_CASE(name)                                                   \
+  case name:                                                                   \
+    printf("%10s:\n", #name);                                                  \
+    break;
+
 void show_node(Node *node, int indent) {
   for (int i = 0; i < indent; i++)
     printf(" ");
 
   switch (node->type) {
   case ND_NUM:
-    printf("ND_NUM: %d\n", node->value);
+    printf("%10s: %d\n", "ND_NUM", node->value);
     return;
-  case ND_ASGN:
-    printf("ND_ASGN:\n");
+  case ND_IDENT:
+    printf("%10s: %s\n", "ND_IDENT", node->name);
+    return;
+  case ND_PROG:
+    printf("%10s:\n", "ND_PROG");
+    for (int i = 0; i < node->functions->len; i++) {
+      Node *tmp = node->functions->data[i];
+      show_node(tmp, indent + 2);
+    }
+    return;
+  case ND_FUNC:
+    printf("%10s: %s\n", "ND_FUNC", node->name);
+    break;
+  case ND_FUNC_DECL:
+    printf("%10s:\n", "ND_FUNC_DECL");
+    for (int i = 0; i < node->parameters->len; i++) {
+      Node *tmp = node->parameters->data[i];
+      show_node(tmp, indent + 2);
+    }
+    return;
+  case ND_FUNC_BODY:
+    printf("%10s:\n", "ND_FUNC_BODY");
+    for (int i = 0; i < node->statements->len; i++) {
+      Node *tmp = node->statements->data[i];
+      show_node(tmp, indent + 2);
+    }
+    return;
+    SHOW_NODE_CASE(ND_ASGN);
+    SHOW_NODE_CASE(ND_EQEQ);
+    SHOW_NODE_CASE(ND_NEQ);
+    SHOW_NODE_CASE(ND_LTEQ);
+    SHOW_NODE_CASE(ND_LT);
+    SHOW_NODE_CASE(ND_CALL);
+    SHOW_NODE_CASE(ND_RET);
+    SHOW_NODE_CASE(ND_IF);
+    SHOW_NODE_CASE(ND_WHILE);
   default:
-    printf("%c\n", node->type);
+    printf("%10c:\n", node->type);
   }
 
   if (node->lhs)

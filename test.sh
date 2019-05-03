@@ -66,10 +66,12 @@ try 0 'main() { a = 2; return 1 == a; }'
 try 0 'main() { a = 2; return a == 1; }'
 try 0 'main() { a = 0 == 1; return a; }'
 
-
-# noteq
+# not eq
 try 0 'main() { return 1 != 1; }'
 try 1 'main() { return 2 != 1; }'
+
+# <=, <, >=, >
+try 0 'main() { return 1 <= 0; }'
 
 # if
 try 1 'main() { if (1==1) return 1; return 0; }'
