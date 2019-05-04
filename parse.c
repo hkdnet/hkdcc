@@ -731,6 +731,16 @@ Vector *tokenize(char *p) {
       continue;
     }
 
+    // start / amp
+    if (*p == '*' || *p == '&') {
+      Token *token = malloc(sizeof(Token));
+      token->type = *p;
+      token->input = p;
+      p++;
+      vec_push(ret, token);
+      continue;
+    }
+
     // identifier
     if (is_identifier_head(*p)) {
       char *beg = p;
