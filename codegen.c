@@ -31,6 +31,12 @@ void generate_lvalue(Node *node, Vector *var_names) {
 }
 
 void generate(Node *node, Vector *var_names) {
+  if (node->type == ND_VAR_DECL) {
+    // TODO: Fix this abuse...
+    printf("push 1\n"); // dummy
+    return;
+  }
+
   if (node->type == ND_PROG) {
     Vector *functions = node->functions;
     for (int i = 0; i < functions->len; i++) {
