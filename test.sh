@@ -96,6 +96,9 @@ try 1 'int main() { return 2 != 1; }'
 
 # <=, <, >=, >
 try 0 'int main() { return 1 <= 0; }'
+try 0 'int main() { return 1 < 0; }'
+try 1 'int main() { return 1 >= 0; }'
+try 1 'int main() { return 1 > 0; }'
 
 # if
 try 1 'int main() { if (1==1) return 1; return 0; }'
@@ -127,6 +130,16 @@ int main() {
 # while
 try 0 'int main() { int a; a = 3; while (a != 0) a = baz(a); return a; }'
 try 0 'int main() { int a; a = 1; while (a = 0) return 128; return a; }'
+try 3 '
+int main() {
+  int a;
+  a = 0;
+  while(a < 3) {
+     a = a + 1;
+  }
+  return a;
+}
+'
 
 # call
 try 1 'int main() { return foo(); }'

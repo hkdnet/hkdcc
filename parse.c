@@ -591,6 +591,7 @@ char *tokenize_lt(char *p, Vector *tokens) {
   Token *token = malloc(sizeof(Token));
   token->type = TK_LT;
   token->input = beg;
+  vec_push(tokens, token);
   return p;
 }
 
@@ -614,6 +615,7 @@ char *tokenize_gt(char *p, Vector *tokens) {
   Token *token = malloc(sizeof(Token));
   token->type = TK_GT;
   token->input = beg;
+  vec_push(tokens, token);
   return p;
 }
 
