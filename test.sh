@@ -96,6 +96,9 @@ try 1 'int main() { return 2 != 1; }'
 
 # <=, <, >=, >
 try 0 'int main() { return 1 <= 0; }'
+try 0 'int main() { return 1 < 0; }'
+try 1 'int main() { return 1 >= 0; }'
+try 1 'int main() { return 1 > 0; }'
 
 # if
 try 1 'int main() { if (1==1) return 1; return 0; }'
