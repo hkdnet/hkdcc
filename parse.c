@@ -292,10 +292,12 @@ Node *assign(ParseState *state) {
   return new_node(ND_ASGN, lhs, rhs);
 }
 
+// block_body: ε | statement block_body
 // statement: "return" assign ";"
 //          | "if" "(" assign ")" statement
 //          | "while" "(" assign ")" statement
 //          | "int" ident ";"
+//          | "{" block_body "}"
 //          | assign ";"
 Node *statement(ParseState *state) {
   if (CUR_TOKEN->type == TK_RETURN) {
@@ -363,6 +365,25 @@ Node *statement(ParseState *state) {
     INCR_POS; // skip ";"
     return ret;
   }
+
+  // block
+  if (CUR_TOKEN->type == TK_LBRACE) {
+    INCR_POS; // skip "{"
+    Vector *statements = new_vector();
+    while (1) {
+      if (CUR_TOKEN->type == TK_RBRACE) {
+        break;
+      }
+
+      Node *stmt = statement(state);
+      vec_push(statements, stmt);
+    }
+    INCR_POS; // skip "}"
+    Node *block = new_node(ND_BLOCK, NULL, NULL);
+    block->statements = statements;
+    return block;
+  }
+
   Node *asgn = assign(state);
   INCR_POS; // skip ";"
   return asgn;

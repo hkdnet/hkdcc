@@ -60,6 +60,7 @@ enum {
   ND_IF,
   ND_WHILE,
   ND_VAR_DECL,
+  ND_BLOCK,
 };
 
 typedef struct Node {
@@ -70,7 +71,7 @@ typedef struct Node {
   char *name; // for ND_IDENT
   Map *variables;
   union {
-    Vector *statements; // for ND_FUNC_BODY
+    Vector *statements; // for ND_FUNC_BODY and ND_BODY
     Vector *parameters; // for ND_FUNC_DECL
     Vector *functions;  // for ND_PROG
   };

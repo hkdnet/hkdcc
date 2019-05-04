@@ -72,6 +72,17 @@ void generate(Node *node, Map *variables) {
     return;
   }
 
+  if (node->type == ND_BLOCK) {
+    Vector *statements = node->statements;
+    for (int i = 0; i < statements->len; i++) {
+      printf("  # -- stmt%04d for block START --\n", i);
+      generate(statements->data[i], variables); // Note that block does not create a new scope
+      printf("  pop rax\n");
+      printf("  # -- stmt%04d for block END --\n", i);
+    }
+    return;
+  }
+
   if (node->type == ND_RET) {
     generate(node->lhs, variables);
     printf("  pop rax\n");
