@@ -159,5 +159,16 @@ int my_func2(int a) { return a + 1; }
 int main() { return my_func2(3); }
 "
 
+# ptr
+try 3 '
+int main() {
+  int x;
+  x = 3;
+  int *y;
+  y = &x;
+  return *y;
+}
+'
+
 echo OK
 
