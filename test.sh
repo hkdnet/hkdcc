@@ -100,6 +100,9 @@ try 0 'int main() { return 1 < 0; }'
 try 1 'int main() { return 1 >= 0; }'
 try 1 'int main() { return 1 > 0; }'
 
+# pure block
+try 0 'int main() { {} return 0; }'
+
 # if
 try 1 'int main() { if (1==1) return 1; return 0; }'
 try 0 'int main() { if (1==0) return 1; return 0; }'
