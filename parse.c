@@ -12,9 +12,6 @@ typedef struct {
   // TODO: declared functions
 } ParseState;
 
-Token *cur_token(ParseState *state) {
-  return (Token *)state->tokens->data[state->pos];
-}
 #define CUR_TOKEN ((Token *)state->tokens->data[state->pos])
 #define INCR_POS state->pos++
 
