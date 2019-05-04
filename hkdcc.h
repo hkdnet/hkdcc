@@ -15,6 +15,10 @@ typedef struct {
 typedef struct {
   char *name;
   int index;
+  struct Type {
+    enum { INT, PTR } type;
+    struct Type *ptr_of;
+  } type;
 } Variable;
 
 enum {
