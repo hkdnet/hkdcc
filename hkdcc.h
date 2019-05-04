@@ -9,6 +9,11 @@ typedef struct {
   Vector *values;
 } Map;
 
+typedef struct {
+  char *name;
+  int index;
+} Variable;
+
 enum {
   TK_NUM = 256, // number
   TK_LPAREN,    // (
@@ -54,6 +59,7 @@ enum {
   ND_RET,
   ND_IF,
   ND_WHILE,
+  ND_VAR_DECL,
 };
 
 typedef struct Node {
@@ -62,7 +68,7 @@ typedef struct Node {
   struct Node *rhs;
   int value;  // the value of ND_NUM or argc for ND_ARGS
   char *name; // for ND_IDENT
-  Vector *variable_names;
+  Map *variables;
   union {
     Vector *statements; // for ND_FUNC_BODY
     Vector *parameters; // for ND_FUNC_DECL
@@ -94,4 +100,4 @@ void show_tokens(Vector *tokens);
 void show_node(Node *node, int indent);
 
 // codegen.c
-void generate(Node *node, Vector *var_names);
+void generate(Node *node, Map *variables);
