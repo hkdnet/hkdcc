@@ -112,6 +112,17 @@ try 0 'int main() { if (1) if(1) return 0; return 1; }'
 try 1 'int main() { if (1) if(0) return 0; return 1; }'
 try 0 'int main() { int a; a = 1; if (1) a = 0; return a; }'
 try 1 'int main() { int a; a = 1; if (0) a = 0; return a; }'
+try 3 '
+int main() {
+  int a;
+  a = 1;
+  if (1 == 1) {
+    a = a + 1;
+    a = a + 1;
+  }
+  return a;
+}
+'
 
 # while
 try 0 'int main() { int a; a = 3; while (a != 0) a = baz(a); return a; }'
