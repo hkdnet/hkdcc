@@ -12,17 +12,11 @@
 static char *arg_registers[7] = {"", "rdi", "rsi", "rdx", "rcs", "r8", "r9"};
 static int label_count = 0;
 
-void generate_lvalue(Node *node, Vector *var_names) {
-  int idx;
-  for (idx = 0; idx < var_names->len; idx++) {
-    char *s = var_names->data[idx];
-    if (strcmp(s, node->name) == 0) {
-      break;
-    }
-  }
+void generate_lvalue(Node *node, Map *variables) {
+  Variable *var = map_get(variables, node->name);
   if (node->type == ND_IDENT) {
     printf("  mov rax, rbp\n");
-    printf("  sub rax, %d\n", (idx + 1) * 8);
+    printf("  sub rax, %d\n", (var->index + 1) * 8);
     printf("  push rax\n");
     return;
   }
@@ -30,7 +24,7 @@ void generate_lvalue(Node *node, Vector *var_names) {
   exit(1);
 }
 
-void generate(Node *node, Vector *var_names) {
+void generate(Node *node, Map *variables) {
   if (node->type == ND_VAR_DECL) {
     // TODO: Fix this abuse...
     printf("push 1\n"); // dummy
@@ -40,7 +34,7 @@ void generate(Node *node, Vector *var_names) {
   if (node->type == ND_PROG) {
     Vector *functions = node->functions;
     for (int i = 0; i < functions->len; i++) {
-      generate(functions->data[i], var_names);
+      generate(functions->data[i], variables);
     }
     return;
   }
@@ -53,34 +47,20 @@ void generate(Node *node, Vector *var_names) {
     printf("  push rbp       # 現在のスタック位置 rbp を積む\n");
     printf("  mov rbp, rsp   # rbp <- rsp\n");
     printf("  sub rsp, %d     # rsp <- rsp - NUM: ローカル変数分の領域を確保\n",
-           8 * body->variable_names->len);
+           8 * body->variables->keys->len);
     // memo: ローカル変数へのアクセスは rbp - 8*n になる
 
     int i;
     for (i = 0; i < decl->parameters->len; i++) {
-      char *parameter_name = decl->parameters->data[i];
-      int idx;
-      for (idx = 0; idx < body->variable_names->len; idx++) {
-        char *s = body->variable_names->data[idx];
-        if (strcmp(s, parameter_name) == 0) {
-          break;
-        }
-      }
-      if (idx == body->variable_names->len) {
-        fprintf(stderr, "parameter %s is not found in local variables\n",
-                parameter_name);
-        exit(1);
-      }
-
       printf("  mov rax, rbp   # rax <- rbp\n");
-      printf("  sub rax, %d     # rax <- rax - NUM\n", (idx + 1) * 8);
+      printf("  sub rax, %d     # rax <- rax - NUM\n", (i + 1) * 8);
       printf("  mov [rax], %s # [rax] <- rax\n", arg_registers[i + 1]);
     }
 
     Vector *statements = body->statements;
     for (i = 0; i < statements->len; i++) {
       printf("  # -- stmt%04d START --\n", i);
-      generate(statements->data[i], body->variable_names);
+      generate(statements->data[i], body->variables);
       printf("  pop rax\n");
       printf("  # -- stmt%04d END --\n", i);
     }
@@ -93,7 +73,7 @@ void generate(Node *node, Vector *var_names) {
   }
 
   if (node->type == ND_RET) {
-    generate(node->lhs, var_names);
+    generate(node->lhs, variables);
     printf("  pop rax\n");
     printf("  mov rsp, rbp\n");
     printf("  pop rbp\n");
@@ -103,11 +83,11 @@ void generate(Node *node, Vector *var_names) {
 
   if (node->type == ND_IF) {
     int cur_cnt = ++label_count;
-    generate(node->lhs, var_names);
+    generate(node->lhs, variables);
     printf("  pop rax\n");
     printf("  cmp rax, 0\n");
     printf("  je .Lend%03d\n", cur_cnt);
-    generate(node->rhs, var_names);
+    generate(node->rhs, variables);
     printf(".Lend%03d:\n", cur_cnt);
     printf("  push rax\n");
     return;
@@ -117,11 +97,11 @@ void generate(Node *node, Vector *var_names) {
     int beg_count = ++label_count;
     int end_count = ++label_count;
     printf(".Lbegin%03d:\n", beg_count);
-    generate(node->lhs, var_names);
+    generate(node->lhs, variables);
     printf("  pop rax\n");
     printf("  cmp rax, 0\n");
     printf("  je .Lend%03d\n", end_count);
-    generate(node->rhs, var_names);
+    generate(node->rhs, variables);
     printf("  jmp .Lbegin%03d\n", beg_count);
     printf(".Lend%03d:\n", end_count);
     printf("  push rax\n");
@@ -134,7 +114,7 @@ void generate(Node *node, Vector *var_names) {
   }
 
   if (node->type == ND_IDENT) {
-    generate_lvalue(node, var_names);
+    generate_lvalue(node, variables);
     printf("  pop rax\n");
     printf("  mov rax, [rax]\n");
     printf("  push rax\n");
@@ -143,7 +123,7 @@ void generate(Node *node, Vector *var_names) {
 
   if (node->type == ND_CALL) {
     if (node->lhs) {
-      generate(node->lhs, var_names);
+      generate(node->lhs, variables);
       for (int i = node->value; i > 0; i--) {
         printf("  pop %s\n", arg_registers[i]);
       }
@@ -154,16 +134,16 @@ void generate(Node *node, Vector *var_names) {
   }
 
   if (node->type == ND_ARGS) {
-    generate(node->lhs, var_names);
+    generate(node->lhs, variables);
     if (node->rhs) {
-      generate(node->rhs, var_names);
+      generate(node->rhs, variables);
     }
     return;
   }
 
   if (node->type == ND_ASGN) {
-    generate_lvalue(node->lhs, var_names);
-    generate(node->rhs, var_names);
+    generate_lvalue(node->lhs, variables);
+    generate(node->rhs, variables);
 
     printf("  pop rdi\n");
     printf("  pop rax\n");
@@ -174,8 +154,8 @@ void generate(Node *node, Vector *var_names) {
 
   if (node->type == ND_EQEQ || node->type == ND_NEQ || node->type == ND_LTEQ ||
       node->type == ND_LT) {
-    generate(node->lhs, var_names);
-    generate(node->rhs, var_names);
+    generate(node->lhs, variables);
+    generate(node->rhs, variables);
     printf("  pop rax\n");
     printf("  pop rdi\n");
     printf("  cmp rdi, rax\n");
@@ -199,9 +179,9 @@ void generate(Node *node, Vector *var_names) {
   }
 
   if (node->lhs)
-    generate(node->lhs, var_names);
+    generate(node->lhs, variables);
   if (node->rhs)
-    generate(node->rhs, var_names);
+    generate(node->rhs, variables);
 
   // two operand
   printf("  pop rdi\n");

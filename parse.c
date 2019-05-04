@@ -8,6 +8,8 @@
 typedef struct {
   Vector *tokens;
   int pos;
+  Map *declared_variables;
+  // TODO: declared functions
 } ParseState;
 
 Token *cur_token(ParseState *state) {
@@ -15,6 +17,31 @@ Token *cur_token(ParseState *state) {
 }
 #define CUR_TOKEN ((Token *)state->tokens->data[state->pos])
 #define INCR_POS state->pos++
+
+int declared_p(ParseState *state, char *name) {
+  void *declared = map_get(state->declared_variables, name);
+  return declared != NULL;
+}
+
+void add_variable_declaration(ParseState *state, char *name) {
+  if (declared_p(state, name)) {
+    fprintf(stderr, "already declared variable %s at %d\n", name, state->pos);
+    exit(1);
+  }
+  int index = state->declared_variables->keys->len;
+  Variable *var = malloc(sizeof(Variable));
+  var->name = name;
+  var->index = index;
+  map_put(state->declared_variables, name, var);
+}
+
+void show_declared_variables(ParseState *state) {
+  for (int i = 0; i < state->declared_variables->keys->len; i++) {
+    char *k = state->declared_variables->keys->data[i];
+    Variable *v = map_get(state->declared_variables, k);
+    printf("%d: %s\n", i, v->name);
+  }
+}
 
 Node *new_node(int type, Node *lhs, Node *rhs) {
   Node *node = malloc(sizeof(Node));
@@ -77,6 +104,13 @@ Node *term(ParseState *state) {
     char *name = CUR_TOKEN->input;
     INCR_POS;
     if (CUR_TOKEN->type != TK_LPAREN) {
+      // variable reference
+      // TODO: function pointer...
+      // ex: int foo() {return 1;} int main() { void* p = foo; }
+      if (!declared_p(state, name)) {
+        fprintf(stderr, "undeclared variable %s at %d\n", name, state->pos);
+        exit(1);
+      }
       Node *ret = new_node_ident(name);
       return ret;
     }
@@ -328,6 +362,7 @@ Node *statement(ParseState *state) {
               state->pos, CUR_TOKEN->input);
       exit(1);
     }
+    add_variable_declaration(state, ret->name);
     INCR_POS; // skip ";"
     return ret;
   }
@@ -335,8 +370,6 @@ Node *statement(ParseState *state) {
   INCR_POS; // skip ";"
   return asgn;
 }
-
-Vector *variable_names(Vector *nodes);
 
 // func_body: stmt func_body'
 // func_body': ε | stmt func_body'
@@ -350,12 +383,10 @@ Node *func_body(ParseState *state) {
     Node *stmt = statement(state);
     vec_push(statements, stmt);
   }
+  state->declared_variables = NULL;
 
   Node *func_body = new_node(ND_FUNC_BODY, NULL, NULL);
 
-  Vector *names = variable_names(statements);
-  // TODO: check if undeclared identifier exists
-  func_body->variable_names = names;
   func_body->statements = statements;
   return func_body;
 }
@@ -379,6 +410,10 @@ Node *func_decl(ParseState *state) {
             CUR_TOKEN->input);
     exit(1);
   }
+
+  Map *variables = new_map();
+  state->declared_variables = variables;
+
   INCR_POS; // skip "("
 
   Vector *parameters = new_vector();
@@ -401,8 +436,14 @@ Node *func_decl(ParseState *state) {
     if (CUR_TOKEN->type != TK_IDENT) {
       fprintf(stderr, "unexpected token at %d: expect identifier but got %s\n",
               state->pos, CUR_TOKEN->input);
+      exit(1);
     }
 
+    if (declared_p(state, CUR_TOKEN->input)) {
+      fprintf(stderr, "already declared argument %s\n", CUR_TOKEN->input);
+      exit(1);
+    }
+    add_variable_declaration(state, CUR_TOKEN->input);
     vec_push(parameters, CUR_TOKEN->input);
     INCR_POS; // skip IDENT
 
@@ -429,6 +470,9 @@ Node *func_decl(ParseState *state) {
   INCR_POS; // skip "{"
 
   Node *rhs = func_body(state);
+
+  rhs->variables = variables;
+  state->declared_variables = NULL;
 
   if (CUR_TOKEN->type != TK_RBRACE) {
     fprintf(stderr, "unexpected token at %d: expect } but got %s\n", state->pos,
@@ -723,6 +767,7 @@ Node *parse(Vector *tokens) {
   ParseState *state = malloc(sizeof(ParseState));
   state->tokens = tokens;
   state->pos = 0;
+  state->declared_variables = NULL;
   Node *prog = program(state);
 
   free(state);
@@ -823,29 +868,4 @@ void show_node(Node *node, int indent) {
     show_node(node->lhs, indent + 2);
   if (node->rhs)
     show_node(node->rhs, indent + 2);
-}
-
-void put_variable_name_on_node(Vector *v, Node *node) {
-  if (node == NULL) {
-    return;
-  }
-  put_variable_name_on_node(v, node->lhs);
-  put_variable_name_on_node(v, node->rhs);
-  if (node->type == ND_VAR_DECL) {
-    for (int i = v->len - 1; i >= 0; i--)
-      if (strcmp(v->data[i], node->name) == 0) {
-        // already declared
-        fprintf(stderr, "duplicate declaration of %s\n", node->name);
-        exit(1);
-      }
-    vec_push(v, node->name);
-  }
-}
-
-Vector *variable_names(Vector *nodes) {
-  Vector *v = new_vector();
-  for (int i = 0; i < nodes->len; i++) {
-    put_variable_name_on_node(v, nodes->data[i]);
-  }
-  return v;
 }
