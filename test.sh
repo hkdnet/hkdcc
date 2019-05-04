@@ -17,7 +17,25 @@ try() {
     exit 1
   fi
 }
+err() {
+  expected="$1"
+  input="$2"
 
+  build/hkdcc "$input" > /dev/null 2>build/stderr
+  status=$?
+  if [[ "$status" != "1" ]]; then
+    echo "exit status should be 1 but got $status"
+    exit 1
+  fi
+
+  actual=$(cat build/stderr)
+  if [[ "$actual" = "$expected" ]]; then
+    echo "$input => $actual"
+  else
+    echo "$input => NG: $expected expected, but got $actual"
+    exit 1
+  fi
+}
 # single value
 try 0 'int main() { return 0; }'
 
@@ -47,11 +65,15 @@ try 4 'int main() { return (3+5)/2; }'
 
 # multi statements
 try 2 'int main() { 1; return 2; }'
+
 # var
 try 1 'int main() { int a; return a = 1; }'
 try 1 'int main() { int a; a = 1; return a; }'
 try 2 'int main() { int a; a = 1; return a + 1; }'
 try 2 'int main() { int a; int b; a = b = 1; return a + b; }'
+
+# undeclared error
+err 'undeclared variable a at 6' 'int main() { a; }'
 
 # var of 2 or more characters
 try 1 'int main() { int ab; return ab = 1; }'
