@@ -105,7 +105,7 @@ int main() { return my_func(); }
 "
 
 try 4 "
-int my_func2(a) { return a + 1; }
+int my_func2(int a) { return a + 1; }
 int main() { return my_func2(3); }
 "
 

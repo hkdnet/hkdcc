@@ -387,6 +387,17 @@ Node *func_decl(ParseState *state) {
     if (CUR_TOKEN->type == TK_RPAREN) {
       break;
     }
+
+    if (CUR_TOKEN->type != TK_IDENT) {
+      fprintf(stderr, "unexpected token at %d: expect identifier but got %s\n",
+              state->pos, CUR_TOKEN->input);
+    }
+    if (strcmp(CUR_TOKEN->input, "int") != 0) {
+      fprintf(stderr, "unexpected token at %d: expect int but got %s\n",
+              state->pos, CUR_TOKEN->input);
+    }
+    INCR_POS; // skip "int"
+
     if (CUR_TOKEN->type != TK_IDENT) {
       fprintf(stderr, "unexpected token at %d: expect identifier but got %s\n",
               state->pos, CUR_TOKEN->input);
