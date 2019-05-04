@@ -88,6 +88,7 @@ try 1 'int main() { int a; a = 1; return 1 == a; }'
 try 0 'int main() { int a; a = 2; return 1 == a; }'
 try 0 'int main() { int a; a = 2; return a == 1; }'
 try 0 'int main() { int a; a = 0 == 1; return a; }'
+try 1 'int main() { return 2 == 1 + 1; }'
 
 # not eq
 try 0 'int main() { return 1 != 1; }'
