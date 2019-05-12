@@ -100,7 +100,7 @@ Node *arguments(ParseState *state, int *argc) {
   return new_node(ND_ARGS, lhs, rhs);
 }
 
-// term: number | ident | &ident | ident "(" arguments ")"
+// term: number | ident | &ident | *ident | ident "(" arguments ")"
 // term: "(" expr ")"
 Node *term(ParseState *state) {
   int beg = state->pos;
@@ -167,6 +167,23 @@ Node *term(ParseState *state) {
     }
     Node *lhs = new_node_ident(name);
     Node *ret = new_node(ND_ADDR, lhs, NULL);
+    return ret;
+  }
+  if (CUR_TOKEN->type == '*') {
+    INCR_POS; // skip '*'
+    if (CUR_TOKEN->type != TK_IDENT) {
+      // TODO: only identifier?
+      fprintf(stderr, "an identifier should follow * at %d\n", state->pos);
+      exit(1);
+    }
+    char *name = CUR_TOKEN->input;
+    INCR_POS;
+    if (!declared_p(state, name)) {
+      fprintf(stderr, "undeclared variable %s at %d\n", name, state->pos);
+      exit(1);
+    }
+    Node *lhs = new_node_ident(name);
+    Node *ret = new_node(ND_DEREF, lhs, NULL);
     return ret;
   }
   fprintf(stderr, "[term]unexpected token at %d: %s\n", state->pos,
