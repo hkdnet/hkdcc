@@ -34,6 +34,17 @@ int consume_star(ParseState *state) {
   return ret;
 }
 
+Type *wrap_type(Type *ty, int count) {
+  while (count > 0) {
+    Type *tmp = malloc(sizeof(Type));
+    tmp->type = PTR;
+    tmp->ptr_of = ty;
+    ty = tmp;
+    count--;
+  }
+  return ty;
+}
+
 void add_variable_declaration(ParseState *state, Variable *var) {
   if (declared_p(state, var->name)) {
     fprintf(stderr, "already declared variable %s at %d\n", var->name,
@@ -416,14 +427,7 @@ Node *statement(ParseState *state) {
     var->name = ret->name;
     Type *ty = malloc(sizeof(Type));
     ty->type = INT;
-    while (star_count > 0) {
-      Type *tmp = malloc(sizeof(Type));
-      tmp->type = PTR;
-      tmp->ptr_of = ty;
-      ty = tmp;
-      star_count--;
-    }
-    var->type = ty;
+    var->type = wrap_type(ty, star_count);
 
     add_variable_declaration(state, var);
     INCR_POS; // skip ";"
@@ -520,14 +524,7 @@ Node *func_decl(ParseState *state) {
     var->name = name;
     Type *ty = malloc(sizeof(Type));
     ty->type = INT;
-    while (star_count > 0) {
-      Type *tmp = malloc(sizeof(Type));
-      tmp->type = PTR;
-      tmp->ptr_of = ty;
-      ty = tmp;
-      star_count--;
-    }
-    var->type = ty;
+    var->type = wrap_type(ty, star_count);
 
     add_variable_declaration(state, var);
     vec_push(parameters, name); // TODO: use Variable* instead of name
