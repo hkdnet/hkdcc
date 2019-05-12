@@ -12,13 +12,15 @@ typedef struct {
   Vector *values;
 } Map;
 
+typedef struct Type {
+  enum { INT, PTR } type;
+  struct Type *ptr_of;
+} Type;
+
 typedef struct {
   char *name;
   int index;
-  struct Type {
-    enum { INT, PTR } type;
-    struct Type *ptr_of;
-  } type;
+  Type *type;
 } Variable;
 
 enum {
