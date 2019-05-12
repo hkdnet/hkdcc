@@ -70,6 +70,7 @@ enum {
   ND_WHILE,
   ND_VAR_DECL,
   ND_BLOCK,
+  ND_ADDR, // &a
 };
 
 typedef struct Node {
