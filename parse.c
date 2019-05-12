@@ -457,10 +457,6 @@ Node *func_decl(ParseState *state) {
       exit(1);
     }
 
-    if (declared_p(state, CUR_TOKEN->input)) {
-      fprintf(stderr, "already declared argument %s\n", CUR_TOKEN->input);
-      exit(1);
-    }
     add_variable_declaration(state, CUR_TOKEN->input);
     vec_push(parameters, CUR_TOKEN->input);
     INCR_POS; // skip IDENT
