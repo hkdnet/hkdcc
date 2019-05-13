@@ -1,6 +1,6 @@
 set(CMAKE_C_FLAGS "-Wall -std=c11")
 
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.5)
 project(hkdcc C)
 add_library(codegen STATIC codegen.c)
 add_library(parse STATIC parse.c)
