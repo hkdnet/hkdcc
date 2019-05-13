@@ -43,7 +43,7 @@ void generate(Node *node, Map *variables) {
     Node *body = node->rhs;
 
     // prologue
-    printf("_%s:\n", node->name);
+    printf("%s:\n", node->name);
     printf("  push rbp       # 現在のスタック位置 rbp を積む\n");
     printf("  mov rbp, rsp   # rbp <- rsp\n");
     printf("  sub rsp, %d     # rsp <- rsp - NUM: ローカル変数分の領域を確保\n",
@@ -140,7 +140,7 @@ void generate(Node *node, Map *variables) {
         printf("  pop %s\n", arg_registers[i]);
       }
     }
-    printf("  call _%s\n", node->name); // always with underscore
+    printf("  call %s\n", node->name); // always with underscore
     printf("  push rax\n");
     return;
   }
