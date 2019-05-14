@@ -25,7 +25,7 @@ int main(int argc, char **argv) {
   // show_node(main, 0);
 
   printf(".intel_syntax noprefix\n");
-  printf(".global _main\n");
+  printf(".global main\n");
 
   generate(main, NULL);
   return 0;
