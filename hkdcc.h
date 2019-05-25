@@ -1,3 +1,6 @@
+#ifndef HDDCC_H_
+#define HDDCC_H_
+
 typedef struct {
   void **data;
   int capacity;
@@ -102,3 +105,5 @@ void show_node(Node *node, int indent);
 
 // codegen.c
 void generate(Node *node, Map *variables);
+
+#endif
