@@ -2,3 +2,5 @@
 tmp*
 build/
 compile_commands.json
+/.vagrant
+*.log
