@@ -12,9 +12,15 @@ typedef struct {
   Vector *values;
 } Map;
 
+typedef struct Type {
+  enum { INT, PTR } type;
+  struct Type *ptr_of;
+} Type;
+
 typedef struct {
   char *name;
   int index;
+  Type *type;
 } Variable;
 
 enum {
@@ -64,6 +70,8 @@ enum {
   ND_WHILE,
   ND_VAR_DECL,
   ND_BLOCK,
+  ND_ADDR,  // &a
+  ND_DEREF, // *a
 };
 
 typedef struct Node {

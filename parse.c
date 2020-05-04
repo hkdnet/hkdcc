@@ -20,16 +20,39 @@ int declared_p(ParseState *state, char *name) {
   return declared != NULL;
 }
 
-void add_variable_declaration(ParseState *state, char *name) {
-  if (declared_p(state, name)) {
-    fprintf(stderr, "already declared variable %s at %d\n", name, state->pos);
+// Note that name should be terminated with NUL.
+int peek_ident_p(ParseState *state, char *name) {
+  return CUR_TOKEN->type == TK_IDENT && (strcmp(CUR_TOKEN->input, name) == 0);
+}
+
+int consume_star(ParseState *state) {
+  int ret = 0;
+  while (CUR_TOKEN->type == '*') {
+    ret++;
+    INCR_POS; // skip '*'
+  }
+  return ret;
+}
+
+Type *wrap_type(Type *ty, int count) {
+  while (count > 0) {
+    Type *tmp = malloc(sizeof(Type));
+    tmp->type = PTR;
+    tmp->ptr_of = ty;
+    ty = tmp;
+    count--;
+  }
+  return ty;
+}
+
+void add_variable_declaration(ParseState *state, Variable *var) {
+  if (declared_p(state, var->name)) {
+    fprintf(stderr, "already declared variable %s at %d\n", var->name,
+            state->pos);
     exit(1);
   }
-  int index = state->declared_variables->keys->len;
-  Variable *var = malloc(sizeof(Variable));
-  var->name = name;
-  var->index = index;
-  map_put(state->declared_variables, name, var);
+  var->index = state->declared_variables->keys->len;
+  map_put(state->declared_variables, var->name, var);
 }
 
 void show_declared_variables(ParseState *state) {
@@ -88,7 +111,7 @@ Node *arguments(ParseState *state, int *argc) {
   return new_node(ND_ARGS, lhs, rhs);
 }
 
-// term: number | ident | ident "(" arguments ")"
+// term: number | ident | &ident | *ident | ident "(" arguments ")"
 // term: "(" expr ")"
 Node *term(ParseState *state) {
   int beg = state->pos;
@@ -139,6 +162,40 @@ Node *term(ParseState *state) {
     }
     fprintf(stderr, "mismatch paren, begin at %d, now %d\n", beg, state->pos);
     exit(1);
+  }
+  if (CUR_TOKEN->type == '&') {
+    INCR_POS; // skip '&'
+    if (CUR_TOKEN->type != TK_IDENT) {
+      // TODO: only identifier?
+      fprintf(stderr, "an identifier should follow & at %d\n", state->pos);
+      exit(1);
+    }
+    char *name = CUR_TOKEN->input;
+    INCR_POS;
+    if (!declared_p(state, name)) {
+      fprintf(stderr, "undeclared variable %s at %d\n", name, state->pos);
+      exit(1);
+    }
+    Node *lhs = new_node_ident(name);
+    Node *ret = new_node(ND_ADDR, lhs, NULL);
+    return ret;
+  }
+  if (CUR_TOKEN->type == '*') {
+    INCR_POS; // skip '*'
+    if (CUR_TOKEN->type != TK_IDENT) {
+      // TODO: only identifier?
+      fprintf(stderr, "an identifier should follow * at %d\n", state->pos);
+      exit(1);
+    }
+    char *name = CUR_TOKEN->input;
+    INCR_POS;
+    if (!declared_p(state, name)) {
+      fprintf(stderr, "undeclared variable %s at %d\n", name, state->pos);
+      exit(1);
+    }
+    Node *lhs = new_node_ident(name);
+    Node *ret = new_node(ND_DEREF, lhs, NULL);
+    return ret;
   }
   fprintf(stderr, "[term]unexpected token at %d: %s\n", state->pos,
           CUR_TOKEN->input);
@@ -296,9 +353,10 @@ Node *assign(ParseState *state) {
 // statement: "return" assign ";"
 //          | "if" "(" assign ")" statement
 //          | "while" "(" assign ")" statement
-//          | "int" ident ";"
+//          | "int" PTR ident ";"
 //          | "{" block_body "}"
 //          | assign ";"
+// PTR: ε | * PTR;
 Node *statement(ParseState *state) {
   if (CUR_TOKEN->type == TK_RETURN) {
     INCR_POS; // skip "return"
@@ -345,8 +403,11 @@ Node *statement(ParseState *state) {
     Node *ret = new_node(ND_WHILE, asgn, stmt);
     return ret;
   }
-  if (CUR_TOKEN->type == TK_IDENT && (strcmp(CUR_TOKEN->input, "int") == 0)) {
+  if (peek_ident_p(state, "int")) {
     INCR_POS; // skip "int"
+
+    int star_count = consume_star(state);
+
     if (CUR_TOKEN->type != TK_IDENT) {
       fprintf(stderr, "unexpected token at %d, expect IDENTIFIER but got %s\n",
               state->pos, CUR_TOKEN->input);
@@ -361,7 +422,14 @@ Node *statement(ParseState *state) {
               state->pos, CUR_TOKEN->input);
       exit(1);
     }
-    add_variable_declaration(state, ret->name);
+
+    Variable *var = malloc(sizeof(Variable));
+    var->name = ret->name;
+    Type *ty = malloc(sizeof(Type));
+    ty->type = INT;
+    var->type = wrap_type(ty, star_count);
+
+    add_variable_declaration(state, var);
     INCR_POS; // skip ";"
     return ret;
   }
@@ -409,13 +477,9 @@ Node *func_body(ParseState *state) {
   return func_body;
 }
 
-// func_decl: "int" ident "(" param ")" "{" func_body "}"
+// func_decl: "int" [*] ident "(" param ")" "{" func_body "}"
 Node *func_decl(ParseState *state) {
-  if (CUR_TOKEN->type != TK_IDENT) {
-    return NULL;
-  }
-
-  if ((strcmp(CUR_TOKEN->input, "int")) != 0) {
+  if (!peek_ident_p(state, "int")) {
     return NULL;
   }
 
@@ -441,28 +505,30 @@ Node *func_decl(ParseState *state) {
       break;
     }
 
-    if (CUR_TOKEN->type != TK_IDENT) {
-      fprintf(stderr, "unexpected token at %d: expect identifier but got %s\n",
-              state->pos, CUR_TOKEN->input);
-    }
-    if (strcmp(CUR_TOKEN->input, "int") != 0) {
+    if (!peek_ident_p(state, "int")) {
       fprintf(stderr, "unexpected token at %d: expect int but got %s\n",
               state->pos, CUR_TOKEN->input);
     }
     INCR_POS; // skip "int"
 
+    int star_count = consume_star(state);
+
     if (CUR_TOKEN->type != TK_IDENT) {
       fprintf(stderr, "unexpected token at %d: expect identifier but got %s\n",
               state->pos, CUR_TOKEN->input);
       exit(1);
     }
 
-    if (declared_p(state, CUR_TOKEN->input)) {
-      fprintf(stderr, "already declared argument %s\n", CUR_TOKEN->input);
-      exit(1);
-    }
-    add_variable_declaration(state, CUR_TOKEN->input);
-    vec_push(parameters, CUR_TOKEN->input);
+    char *name = CUR_TOKEN->input;
+    Variable *var = malloc(sizeof(Variable));
+    var->name = name;
+    Type *ty = malloc(sizeof(Type));
+    ty->type = INT;
+    var->type = wrap_type(ty, star_count);
+
+    add_variable_declaration(state, var);
+    vec_push(parameters, name); // TODO: use Variable* instead of name
+
     INCR_POS; // skip IDENT
 
     if (CUR_TOKEN->type == TK_COMMA) {
@@ -727,6 +793,16 @@ Vector *tokenize(char *p) {
       token->type = TK_NUM;
       token->input = p;
       token->value = strtol(p, &p, 10);
+      vec_push(ret, token);
+      continue;
+    }
+
+    // start / amp
+    if (*p == '*' || *p == '&') {
+      Token *token = malloc(sizeof(Token));
+      token->type = *p;
+      token->input = p;
+      p++;
       vec_push(ret, token);
       continue;
     }
